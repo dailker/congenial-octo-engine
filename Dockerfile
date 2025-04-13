@@ -1,5 +1,5 @@
-# Use a Maven image to build the application
-FROM maven:3.8.5-openjdk-21 AS build
+# Use Maven with Java 21 to build the app
+FROM maven:3.9.5-eclipse-temurin-21 AS build
 
 WORKDIR /app
 
@@ -10,8 +10,8 @@ COPY src ./src
 # Package the application
 RUN mvn clean package -DskipTests
 
-# Use a lightweight JDK to run the app
-FROM openjdk:21-jdk-slim
+# Use OpenJDK 21 to run the app
+FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
 
