@@ -9,10 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,22 +47,8 @@ public class AuthController {
                                        HttpServletRequest request,
                                        HttpServletResponse response) {
         try {
-            // Authenticate the user
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    loginRequest.getEmail(),
-                    loginRequest.getPassword()
-                )
-            );
-
-            // Set the authentication in the SecurityContext
-            SecurityContext context = SecurityContextHolder.createEmptyContext();
-            context.setAuthentication(authentication);
-            SecurityContextHolder.setContext(context);
-            securityContextRepository.saveContext(context, request, response);
-
-            // Optionally, generate a token if using JWT or similar mechanism
-            String token = authService.generateToken(authentication);
+            // Use the existing loginUser method in AuthService
+            String token = authService.loginUser(loginRequest.getEmail(), loginRequest.getPassword(), request, response);
 
             return ResponseEntity.ok(Map.of(
                 "token", token,
