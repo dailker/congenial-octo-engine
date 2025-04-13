@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::section})}">
+<head>
+    <title>Tasks</title>
+</head>
+<body>
+<section>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>All Tasks</h1>
+        <a th:href="@{/tasks/new}" class="btn btn-primary">
+            <i class="mdi mdi-plus"></i> New Task
+        </a>
+    </div>
+
+    <div th:if="${taskInvitations != null and !taskInvitations.isEmpty()}">
+        <h3>Task Invitations</h3>
+        <ul>
+            <li th:each="task : ${taskInvitations}">
+                <span th:text="${task.title}"></span>
+                <button class="btn btn-success btn-sm" th:onclick="'acceptTaskInvitation(\'' + ${task.id} + '\')'">Accept</button>
+                <button class="btn btn-danger btn-sm" th:onclick="'rejectTaskInvitation(\'' + ${task.id} + '\')'">Reject</button>
+            </li>
+        </ul>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Description</th>
+                                    <th>Due Date</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="task : ${tasks}">
+                                    <td th:text="${task.title}"></td>
+                                    <td th:text="${task.description}"></td>
+                                    <td th:text="${#temporals.format(task.dueDate, 'yyyy-MM-dd HH:mm')}"></td>
+                                    <td>
+                                        <span th:class="${'badge ' + 
+                                            (task.priority == 'HIGH' ? 'text-bg-danger' : 
+                                            (task.priority == 'MEDIUM' ? 'text-bg-warning' : 'text-bg-success'))}"
+                                            th:text="${task.priority}">
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span th:class="${'badge ' + (task.completed ? 'text-bg-success' : 'text-bg-secondary')}"
+                                            th:text="${task.completed ? 'Completed' : 'Pending'}">
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary toggle-task" 
+                                                th:data-task-id="${task.id}">
+                                                <i class="mdi" th:classappend="${task.completed ? 'mdi-undo' : 'mdi-check'}"></i>
+                                            </button>
+                                            <a th:href="@{'/tasks/edit/' + ${task.id}}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-danger delete-task" 
+                                                th:data-task-id="${task.id}">
+                                                <i class="mdi mdi-delete"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-primary invite-user" th:data-task-id="${task.id}">
+                                                <i class="mdi mdi-account-plus"></i> Invite User
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(tasks)}">
+                                    <td colspan="6" class="text-center">No tasks found</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get CSRF token from meta tag (make sure your layout includes this)
+            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    
+            // Toggle task completion status
+            document.querySelectorAll('.toggle-task').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const taskId = this.getAttribute('data-task-id');
+                    const taskCompleted = this.querySelector('i').classList.contains('mdi-undo');
+                    const endpoint = taskCompleted 
+                        ? `/api/tasks/uncomplete/${taskId}` 
+                        : `/api/tasks/complete/${taskId}`;
+    
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                [csrfHeader]: csrfToken
+                            }
+                        });
+    
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            const error = await response.text();
+                            console.error('Error:', error);
+                            alert('Failed to update task status: ' + error);
+                        }
+                    } catch (error) {
+                        console.error('Network error:', error);
+                        alert('Network error - please try again');
+                    }
+                });
+            });
+    
+            // Delete task
+            document.querySelectorAll('.delete-task').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const taskId = this.getAttribute('data-task-id');
+    
+                    if (confirm('Are you sure you want to delete this task?')) {
+                        try {
+                            const response = await fetch(`/api/tasks/${taskId}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    [csrfHeader]: csrfToken
+                                }
+                            });
+    
+                            if (response.ok) {
+                                location.reload();
+                            } else {
+                                const error = await response.text();
+                                alert('Failed to delete task: ' + error);
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Network error - please try again');
+                        }
+                    }
+                });
+            });
+        });
+
+        function acceptTaskInvitation(taskId) {
+            fetch(`/api/tasks/${taskId}/accept`, { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Failed to accept task invitation.');
+                    }
+                });
+        }
+
+        function rejectTaskInvitation(taskId) {
+            fetch(`/api/tasks/${taskId}/reject`, { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Failed to reject task invitation.');
+                    }
+                });
+        }
+    </script>
+    
+</section>
+</body>
+</html>
