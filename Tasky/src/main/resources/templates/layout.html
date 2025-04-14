@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+    th:fragment="layout(content)">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title th:text="${#strings.isEmpty(title) ? 'Tasky' : title + ' - Tasky'}">Tasky</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #f43f5e;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+
+        [data-bs-theme="dark"] {
+            --bs-body-bg: #0f172a;
+            --bs-body-color: #e2e8f0;
+            --bs-secondary-bg: #1e293b;
+            --bs-tertiary-bg: #334155;
+        }
+
+        body {
+            background-color: var(--bs-body-bg);
+            color: var(--bs-body-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background-color: var(--dark-color) !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color) !important;
+        }
+
+        .container {
+            flex: 1;
+        }
+
+        .card {
+            background-color: var(--bs-secondary-bg);
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .badge {
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+        }
+
+        .task-priority-high {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .task-priority-medium {
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .task-priority-low {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            opacity: 0.7;
+        }
+
+        /* Friend requests specific styles */
+        .friend-requests-btn {
+            position: relative;
+            margin-right: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .friend-requests-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 0.6rem;
+            padding: 0.25em 0.4em;
+        }
+
+        .request-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid var(--bs-tertiary-bg);
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .request-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            object-fit: cover;
+        }
+
+        .request-user-info {
+            flex-grow: 1;
+        }
+
+        .modal-content {
+            background-color: var(--bs-secondary-bg);
+            color: var(--bs-body-color);
+        }
+
+        .btn-close {
+            filter: invert(1);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="mdi mdi-checkbox-marked-circle-outline me-2"></i>
+                Tasky
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div style="padding-right: 30px;"></div>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav me-auto" sec:authorize="isAuthenticated()">
+                    <a class="nav-link" href="/tasks">
+                        <i class="mdi mdi-format-list-bulleted me-1"></i> Tasks
+                    </a>
+                    <a class="nav-link" href="/profile">
+                        <i class="mdi mdi-account-circle-outline me-1"></i> Profile
+                    </a>
+                    <a class="nav-link" href="/teams">
+                        <i class="mdi mdi-account-circle-outline me-1"></i> Teams
+                    </a>
+                </div>
+                <div class="navbar-nav">
+                    <div sec:authorize="isAuthenticated()">
+                        <!-- Friend Requests Button -->
+                        <!-- In layout.html -->
+                        <div class="friend-requests-btn nav-link" data-bs-toggle="modal" data-bs-target="#friendRequestsModal">
+                            <i class="mdi mdi-account-plus me-1"></i> Requests
+                            <span th:if="${receivedWithSenders != null and not receivedWithSenders.empty}"
+                                  class="badge bg-danger friend-requests-badge">
+                                <span th:text="${receivedWithSenders.size()}">0</span>
+                            </span>
+                        </div>
+
+
+                        <!-- Logout Button -->
+                        <form th:action="@{/logout}" method="post" class="d-inline">
+                            <button type="submit" class="nav-link border-0 bg-transparent p-0">
+                                <i class="mdi mdi-logout me-1"></i> Logout
+                            </button>
+                        </form>
+                    </div>
+                    <div sec:authorize="!isAuthenticated()">
+                        <a class="nav-link" href="/login">
+                            <i class="mdi mdi-login me-1"></i> Login
+                        </a>
+                        <a class="nav-link" href="/register">
+                            <i class="mdi mdi-account-plus-outline me-1"></i> Register
+                        </a>
+                    </div>
+                    <button class="btn theme-toggle ms-2" onclick="toggleTheme()">
+                        <i class="mdi mdi-theme-light-dark"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Friend Requests Modal -->
+    <div class="modal fade" id="friendRequestsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Friend Requests</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Received Requests -->
+                    <h6>Received Requests</h6>
+                    <div th:if="${receivedWithSenders == null or receivedWithSenders.isEmpty()}">
+                        <p class="text-center text-muted">No received friend requests</p>
+                    </div>
+                    <div th:each="requestWithUser : ${receivedWithSenders}" class="request-item">
+                        <div class="d-flex align-items-center">
+                            <img th:src="${requestWithUser.user?.avatarUrl} ?: 'https://www.pphfoundation.ca/wp-content/uploads/2018/05/default-avatar.png'"
+                                 class="request-avatar">
+                            <div class="request-user-info">
+                                <div th:text="${requestWithUser.user?.fullName}"></div>
+                                <small class="text-muted" th:text="${requestWithUser.user?.email}"></small>
+                            </div>
+                        </div>
+                        <div class="request-actions">
+                            <button class="btn btn-sm btn-success" 
+                                    th:data-request-id="${requestWithUser.request.id}"
+                                    onclick="acceptRequest(this.getAttribute('data-request-id'))">
+                                <i class="mdi mdi-check"></i> Accept
+                            </button>
+                            <button class="btn btn-sm btn-danger" 
+                                    th:data-request-id="${requestWithUser.request.id}"
+                                    onclick="rejectRequest(this.getAttribute('data-request-id'))">
+                                <i class="mdi mdi-close"></i> Reject
+                            </button>
+                        </div>
+                    </div>
+    
+                    <!-- Sent Requests -->
+                    <h6 class="mt-4">Sent Requests</h6>
+                    <div th:if="${sentWithRecipients == null or sentWithRecipients.isEmpty()}">
+                        <p class="text-center text-muted">No sent friend requests</p>
+                    </div>
+                    <div th:each="requestWithUser : ${sentWithRecipients}" class="request-item">
+                        <div class="d-flex align-items-center">
+                            <img th:src="${requestWithUser.user?.avatarUrl} ?: 'https://www.pphfoundation.ca/wp-content/uploads/2018/05/default-avatar.png'"
+                                 class="request-avatar">
+                            <div class="request-user-info">
+                                <div th:text="${requestWithUser.user?.fullName}"></div>
+                                <small class="text-muted" th:text="${requestWithUser.user?.email}"></small>
+                            </div>
+                        </div>
+                        <div class="request-actions">
+                            <button class="btn btn-sm btn-warning" disabled>
+                                <i class="mdi mdi-clock-outline"></i> Pending
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <div th:replace="${content}"></div>
+    </div>
+
+    <footer class="mt-5 py-3 text-center text-muted">
+        <div class="container">
+            <p>© 2025 Tasky. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Apply saved theme on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        });
+
+        function acceptRequest(requestId) {
+    fetch(`/api/users/friends/accept/${requestId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.message || 'Failed to accept request'); });
+        }
+        location.reload();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message);
+    });
+}
+
+function rejectRequest(requestId) {
+    fetch(`/api/users/friends/reject/${requestId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.message || 'Failed to reject request'); });
+        }
+        location.reload();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message);
+    });
+}
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::section})}">
+<head>
+    <title>Teams</title>
+</head>
+<body>
+<section>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>All Teams</h1>
+        <a th:href="@{/teams/new}" class="btn btn-primary">
+            <i class="mdi mdi-plus"></i> New Team
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Team Name</th>
+                                    <th>Description</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="team : ${teams}">
+                                    <td th:text="${team.name}"></td>
+                                    <td th:text="${team.description}"></td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a th:href="@{'/teams/edit/' + ${team.id}}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-danger delete-team"
+                                                    th:data-team-id="${team.id}">
+                                                <i class="mdi mdi-delete"></i>
+                                            </button>
+                                            <a th:href="@{'/teams/' + ${team.id} + '/tasks'}" class="btn btn-sm btn-outline-secondary">
+                                                <a>View Tasks</a>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(teams)}">
+                                    <td colspan="3" class="text-center">No teams found</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get CSRF token from meta tag (make sure your layout includes this)
+            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+            // Delete team
+            document.querySelectorAll('.delete-team').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const teamId = this.getAttribute('data-team-id');
+    
+                    if (confirm('Are you sure you want to delete this team?')) {
+                        try {
+                            const response = await fetch(`/api/teams/${teamId}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    [csrfHeader]: csrfToken
+                                }
+                            });
+    
+                            if (response.ok) {
+                                location.reload();
+                            } else {
+                                const error = await response.text();
+                                alert('Failed to delete task: ' + error);
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Network error - please try again');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+    
+</section>
+</body>
+</html>

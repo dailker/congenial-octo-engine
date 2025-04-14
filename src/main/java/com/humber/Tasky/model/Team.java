@@ -2,20 +2,17 @@ package com.humber.tasky.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.util.List;
 
-@Data
 @Entity
-public class User {
-
+@Data
+public class Team {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String username;
+    private String name;
 
-    private String password;
-
-    @ManyToOne
-    @JoinColumn(name = "team_id")
-    private Team team;
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL)
+    private List<User> members;
 }

@@ -160,6 +160,28 @@
         .btn-close {
             filter: invert(1);
         }
+
+        .clickable-div {
+            cursor: pointer;
+            padding: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--bs-secondary-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 
@@ -261,6 +283,33 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Messenger Section -->
+    <div id="messenger">
+        <h3>Messenger</h3>
+        <div id="messages"></div>
+        <input type="text" id="message-input" placeholder="Type a message..." />
+        <button id="send-message">Send</button>
+    </div>
+
+    <!-- Voice Call Section -->
+    <div id="voice-call">
+        <button id="start-call">Start Voice Call</button>
+        <button id="end-call" style="display: none;">End Call</button>
+    </div>
+
+    <!-- Team Request Popup -->
+    <div id="team-request" class="clickable-div">
+        <p>Request to Join a Team</p>
+    </div>
+
+    <div id="team-popup" class="popup">
+        <form id="team-request-form">
+            <label for="team-name">Team Name:</label>
+            <input type="text" id="team-name" name="teamName" required>
+            <button type="submit">Request</button>
+        </form>
     </div>
 
     <footer class="mt-5 py-3 text-center text-muted">
@@ -376,6 +425,101 @@ function rejectRequest(requestId) {
                 }
             }).catch(err => console.error('Ping failed:', err));
         }, 30000); // Ping every 30 seconds
+
+        // Team request popup functionality
+        document.getElementById('team-request').addEventListener('click', function () {
+            document.getElementById('team-popup').style.display = 'block';
+        });
+
+        document.getElementById('team-request-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const teamName = document.getElementById('team-name').value;
+            // Send request to the server
+            fetch('/api/teams', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: teamName })
+            }).then(response => {
+                if (response.ok) {
+                    alert('Request sent successfully!');
+                    document.getElementById('team-popup').style.display = 'none';
+                } else {
+                    alert('Failed to send request.');
+                }
+            });
+        });
+
+        // Messenger functionality
+        const socket = new WebSocket('ws://localhost:8080/ws');
+
+        socket.onmessage = function (event) {
+            const messagesDiv = document.getElementById('messages');
+            const message = document.createElement('p');
+            message.textContent = event.data;
+            messagesDiv.appendChild(message);
+        };
+
+        document.getElementById('send-message').addEventListener('click', function () {
+            const input = document.getElementById('message-input');
+            socket.send(input.value);
+            input.value = '';
+        });
+
+        // Voice call functionality
+        let localStream;
+        let peerConnection;
+
+        const startCallButton = document.getElementById('start-call');
+        const endCallButton = document.getElementById('end-call');
+
+        startCallButton.addEventListener('click', async function () {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            peerConnection = new RTCPeerConnection();
+
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+            peerConnection.onicecandidate = function (event) {
+                if (event.candidate) {
+                    socket.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
+                }
+            };
+
+            peerConnection.ontrack = function (event) {
+                const audio = document.createElement('audio');
+                audio.srcObject = event.streams[0];
+                audio.autoplay = true;
+                document.body.appendChild(audio);
+            };
+
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.send(JSON.stringify({ type: 'offer', offer }));
+
+            startCallButton.style.display = 'none';
+            endCallButton.style.display = 'block';
+        });
+
+        endCallButton.addEventListener('click', function () {
+            peerConnection.close();
+            localStream.getTracks().forEach(track => track.stop());
+            startCallButton.style.display = 'block';
+            endCallButton.style.display = 'none';
+        });
+
+        socket.onmessage = async function (event) {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'offer') {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                socket.send(JSON.stringify({ type: 'answer', answer }));
+            } else if (data.type === 'answer') {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+            } else if (data.type === 'candidate') {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            }
+        };
     </script>
 </body>
 
