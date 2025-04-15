@@ -25,14 +25,13 @@ public class SecurityConfig {
         this.customUserDetailsService = customUserDetailsService;
     }
 
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/**")
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+                .ignoringRequestMatchers("/api/**") // Disable CSRF for API endpoints
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())) // Enable CSRF for non-API endpoints
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/", 
@@ -44,20 +43,20 @@ public class SecurityConfig {
                     "/images/**", 
                     "/error", 
                     "/favicon.ico"
-                ).permitAll()
-                .requestMatchers("/api/auth/**", "/api/users/friends/accept/**", "/api/users/friends/reject/**").permitAll()
+                ).permitAll() // Publicly accessible endpoints
+                .requestMatchers("/api/auth/**", "/api/users/friends/accept/**", "/api/users/friends/reject/**").permitAll() // Allow specific API endpoints
                 .requestMatchers(
                     "/profile/**", 
                     "/profile", 
                     "/edit-profile",
                     "/tasks/**",
                     "/dashboard/**"
-                ).authenticated()
-                .anyRequest().authenticated())
+                ).authenticated() // Require authentication for these endpoints
+                .anyRequest().authenticated()) // All other endpoints require authentication
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/tasks", true) // Changed to profile as default
+                .defaultSuccessUrl("/tasks", true) // Redirect to tasks page after successful login
                 .usernameParameter("email")
                 .failureUrl("/login?error=true")
                 .permitAll())
@@ -70,12 +69,12 @@ public class SecurityConfig {
             .userDetailsService(customUserDetailsService)
             .sessionManagement(session -> session
                 .invalidSessionUrl("/login?invalid-session")
-                .maximumSessions(1)
+                .maximumSessions(1) // Limit to one session per user
                 .expiredUrl("/login?session-expired"))
             .headers(headers -> headers
-                .frameOptions().sameOrigin()
-                .httpStrictTransportSecurity().disable());
-        
+                .frameOptions().sameOrigin() // Allow frames from the same origin
+                .httpStrictTransportSecurity().disable()); // Disable HSTS for development purposes
+
         return http.build();
     }
 

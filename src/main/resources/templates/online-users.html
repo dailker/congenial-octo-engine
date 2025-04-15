@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Online Users</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Online Users</h1>
+        <ul id="onlineUsersList" class="list-group">
+            <!-- Online users will be dynamically loaded here -->
+        </ul>
+    </div>
+
+    <script>
+        fetch('/api/users/onlineUsers')
+            .then(response => response.json())
+            .then(users => {
+                const list = document.getElementById('onlineUsersList');
+                users.forEach(user => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item';
+                    listItem.textContent = user.fullName + ' (' + user.email + ')';
+                    list.appendChild(listItem);
+                });
+            })
+            .catch(error => console.error('Error fetching online users:', error));
+    </script>
+</body>
+</html>

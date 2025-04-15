@@ -30,6 +30,7 @@ public class GlobalControllerAdvice {
         this.taskRepository = taskRepository;
         this.userService = userService;
     }
+
     @ModelAttribute
     public void addFriendRequests(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -37,33 +38,32 @@ public class GlobalControllerAdvice {
             try {
                 String email = auth.getName();
                 User user = userService.getUserByEmail(email);
-                
-                // Get requests with user data
+
                 List<FriendRequest> receivedRequests = userService.getPendingFriendRequests(user.getId());
                 List<FriendRequest> sentRequests = userService.getSentFriendRequests(user.getId());
-                
-                // Create DTOs with user data
+
                 List<FriendRequestWithUser> receivedWithSenders = receivedRequests.stream()
                     .map(request -> {
                         User sender = userService.getUserById(request.getSenderId()).orElse(null);
                         return new FriendRequestWithUser(request, sender);
                     })
                     .collect(Collectors.toList());
-                
+
                 List<FriendRequestWithUser> sentWithRecipients = sentRequests.stream()
                     .map(request -> {
                         User recipient = userService.getUserById(request.getRecipientId()).orElse(null);
                         return new FriendRequestWithUser(request, recipient);
                     })
                     .collect(Collectors.toList());
-                
-                // Add to model
+
                 model.addAttribute("receivedWithSenders", receivedWithSenders);
                 model.addAttribute("sentWithRecipients", sentWithRecipients);
-                
             } catch (Exception e) {
                 logger.error("Error loading friend requests", e);
+                model.addAttribute("receivedWithSenders", List.of()); // Add empty list on error
             }
+        } else {
+            model.addAttribute("receivedWithSenders", List.of()); // Add empty list if not authenticated
         }
     }
 
@@ -79,7 +79,10 @@ public class GlobalControllerAdvice {
                 model.addAttribute("taskInvitations", taskInvitations);
             } catch (Exception e) {
                 logger.error("Error loading task invitations", e);
+                model.addAttribute("taskInvitations", List.of()); // Add empty list on error
             }
+        } else {
+            model.addAttribute("taskInvitations", List.of()); // Add empty list if not authenticated
         }
     }
 }

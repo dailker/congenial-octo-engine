@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
-    <title th:text="${#strings.isEmpty(title) ? 'Tasky' : title + ' - Tasky'}">Tasky</title>
+    <title th:text="${title ?: 'Tasky'}">Tasky</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css" rel="stylesheet">
     <style>
@@ -181,6 +181,9 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
         }
     </style>
 </head>
@@ -205,6 +208,9 @@
                     <a class="nav-link" href="/profile">
                         <i class="mdi mdi-account-circle-outline me-1"></i> Profile
                     </a>
+                    <a class="nav-link" href="/teams">
+                        <i class="mdi mdi-account-group-outline me-1"></i> Teams
+                    </a>
                 </div>
                 <div class="navbar-nav">
                     <div sec:authorize="isAuthenticated()">
@@ -213,20 +219,54 @@
                             <button class="btn btn-secondary dropdown-toggle" type="button" id="requestsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 Requests
                             </button>
-                            <ul class="dropdown-menu" aria-labelledby="requestsDropdown">
-                                <li th:if="${receivedWithSenders != null and !receivedWithSenders.isEmpty()}">
+                            <div class="dropdown-menu p-3" aria-labelledby="requestsDropdown" style="width: 400px;">
+                                <!-- Friend Requests Section -->
+                                <div>
                                     <h6 class="dropdown-header">Friend Requests</h6>
-                                    <li th:each="request : ${receivedWithSenders}">
-                                        <a class="dropdown-item" th:text="${request.sender.fullName}"></a>
-                                    </li>
-                                </li>
-                                <li th:if="${taskInvitations != null and !taskInvitations.isEmpty()}">
+                                    <div th:if="${receivedWithSenders != null and !receivedWithSenders.isEmpty()}">
+                                        <div th:each="request : ${receivedWithSenders}" class="d-flex align-items-center mb-2">
+                                            <img th:src="${request.user.avatarUrl}" alt="Avatar" class="request-avatar me-2">
+                                            <span class="request-user-info" th:text="${request.user.fullName}"></span>
+                                            <div class="request-actions">
+                                                <button class="btn btn-success btn-sm" th:onclick="'acceptRequest(' + ${request.request.id} + ')'">Accept</button>
+                                                <button class="btn btn-danger btn-sm" 
+                                                        th:data-request-id="${request.request.id}" 
+                                                        onclick="rejectRequest(this.getAttribute('data-request-id'))">
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div th:if="${receivedWithSenders == null or receivedWithSenders.isEmpty()}" class="text-muted">
+                                        No friend requests.
+                                    </div>
+                                </div>
+
+                                <!-- Task Invitations Section -->
+                                <div class="mt-3">
                                     <h6 class="dropdown-header">Task Invitations</h6>
-                                    <li th:each="task : ${taskInvitations}">
-                                        <a class="dropdown-item" th:text="${task.title}"></a>
-                                    </li>
-                                </li>
-                            </ul>
+                                    <div th:if="${taskInvitations != null and !taskInvitations.isEmpty()}">
+                                        <div th:each="task : ${taskInvitations}" class="d-flex align-items-center mb-2">
+                                            <span class="me-2" th:text="${task.title}"></span>
+                                            <div class="request-actions">
+                                                <button class="btn btn-success btn-sm" 
+                                                        th:data-task-id="${task.id}" 
+                                                        onclick="acceptTaskInvitation(this.getAttribute('data-task-id'))">
+                                                    Accept
+                                                </button>
+                                                <button class="btn btn-danger btn-sm" 
+                                                        th:data-task-id="${task.id}" 
+                                                        onclick="rejectTaskInvitation(this.getAttribute('data-task-id'))">
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div th:if="${taskInvitations == null or taskInvitations.isEmpty()}" class="text-muted">
+                                        No task invitations.
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Add Online Friends Dropdown -->
@@ -235,8 +275,11 @@
                                 Online Friends
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="onlineFriendsDropdown">
-                                <li th:each="friend : ${onlineFriends}">
+                                <li th:if="${onlineFriends != null and !onlineFriends.isEmpty()}" th:each="friend : ${onlineFriends}">
                                     <a class="dropdown-item" th:text="${friend.fullName}" th:onclick="'openChat(\'' + ${friend.id} + '\')'"></a>
+                                </li>
+                                <li th:if="${onlineFriends == null or onlineFriends.isEmpty()}" class="text-muted text-center">
+                                    No online friends.
                                 </li>
                             </ul>
                         </div>
@@ -265,7 +308,7 @@
     </nav>
 
     <div class="container mt-4">
-        <div th:replace="${content}"></div>
+        <div th:replace="${content ?: 'fragments/default-content'}"></div>
     </div>
 
     <!-- Add Chat Box -->
@@ -285,32 +328,6 @@
         </div>
     </div>
 
-    <!-- Messenger Section -->
-    <div id="messenger">
-        <h3>Messenger</h3>
-        <div id="messages"></div>
-        <input type="text" id="message-input" placeholder="Type a message..." />
-        <button id="send-message">Send</button>
-    </div>
-
-    <!-- Voice Call Section -->
-    <div id="voice-call">
-        <button id="start-call">Start Voice Call</button>
-        <button id="end-call" style="display: none;">End Call</button>
-    </div>
-
-    <!-- Team Request Popup -->
-    <div id="team-request" class="clickable-div">
-        <p>Request to Join a Team</p>
-    </div>
-
-    <div id="team-popup" class="popup">
-        <form id="team-request-form">
-            <label for="team-name">Team Name:</label>
-            <input type="text" id="team-name" name="teamName" required>
-            <button type="submit">Request</button>
-        </form>
-    </div>
 
     <footer class="mt-5 py-3 text-center text-muted">
         <div class="container">
@@ -425,29 +442,6 @@ function rejectRequest(requestId) {
                 }
             }).catch(err => console.error('Ping failed:', err));
         }, 30000); // Ping every 30 seconds
-
-        // Team request popup functionality
-        document.getElementById('team-request').addEventListener('click', function () {
-            document.getElementById('team-popup').style.display = 'block';
-        });
-
-        document.getElementById('team-request-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            const teamName = document.getElementById('team-name').value;
-            // Send request to the server
-            fetch('/api/teams', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: teamName })
-            }).then(response => {
-                if (response.ok) {
-                    alert('Request sent successfully!');
-                    document.getElementById('team-popup').style.display = 'none';
-                } else {
-                    alert('Failed to send request.');
-                }
-            });
-        });
 
         // Messenger functionality
         const socket = new WebSocket('ws://localhost:8080/ws');

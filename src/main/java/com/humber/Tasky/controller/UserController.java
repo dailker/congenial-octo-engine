@@ -105,4 +105,10 @@ public class UserController {
         String currentUserEmail = authentication.getName(); // Retrieve the authenticated user's email
         return userService.areUsersConnected(currentUserEmail, userId);
     }
+
+    @GetMapping("/onlineUsers")
+    public ResponseEntity<List<User>> getOnlineUsers() {
+        List<User> onlineUsers = userService.getOnlineUsers();
+        return ResponseEntity.ok(onlineUsers);
+    }
 }
