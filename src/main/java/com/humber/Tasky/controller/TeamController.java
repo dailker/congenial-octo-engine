@@ -5,6 +5,11 @@ import com.humber.Tasky.model.User;
 import com.humber.Tasky.repository.UserRepository;
 import com.humber.Tasky.service.TeamService;
 import com.humber.Tasky.service.UserService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +22,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("unused")
 @RestController
+@Tag(name = "Team API")
 @RequestMapping("/api/teams")
 public class TeamController {
     @Autowired
@@ -42,6 +49,11 @@ public class TeamController {
         return ResponseEntity.ok(team.get());
     }
 
+    @Operation(summary = "Get all teams", description = "Retrieve all teams for the authenticated user")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Teams retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     @GetMapping
     public ResponseEntity<?> getAllTeams(Principal principal) {
         if (principal == null) {
@@ -58,6 +70,12 @@ public class TeamController {
         }
     }
 
+    @Operation(summary = "Create a team", description = "Create a new team")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team created successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     @PostMapping
     public ResponseEntity<?> createTeam(@RequestBody Team team, Principal principal) {
         if (principal == null) {
@@ -79,6 +97,11 @@ public class TeamController {
         }
     }
 
+    @Operation(summary = "Add a member to a team", description = "Add a member to a team by their ID")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Member added successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @PostMapping("/{teamId}/add-member/{userId}")
     public ResponseEntity<?> addMemberToTeam(@PathVariable String teamId, @PathVariable String userId) {
         if (teamId == null || teamId.trim().isEmpty()) {
@@ -96,6 +119,11 @@ public class TeamController {
         }
     }
 
+    @Operation(summary = "Remove a member from a team", description = "Remove a member from a team by their ID")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Member removed successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @DeleteMapping("/{teamId}/remove-member/{userId}")
     public ResponseEntity<?> removeMemberFromTeam(@PathVariable String teamId, @PathVariable String userId,
                                                   @RequestParam String requesterId) {
@@ -117,6 +145,11 @@ public class TeamController {
         }
     }
 
+    @Operation(summary = "Invite a user to a team", description = "Invite a user to a team by their email")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User invited successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @PostMapping("/{teamId}/invite")
     public ResponseEntity<?> inviteUserToTeam(@PathVariable String teamId, @RequestBody Map<String, String> requestBody, Principal principal) {
         if (principal == null) {
@@ -146,6 +179,11 @@ public class TeamController {
         }
     }
 
+    @Operation(summary = "Send a message to a team", description = "Send a message to a team chat")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Message sent successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @PostMapping("/{teamId}/send-message")
     public ResponseEntity<?> sendMessageToTeam(@PathVariable String teamId, @RequestParam String senderId,
                                                @RequestParam String message, @RequestParam(required = false) String fileUrl) {
@@ -167,6 +205,11 @@ public class TeamController {
         }
     }
 
+    @Operation(summary = "Send a join request to a team", description = "Send a join request to a team")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Join request sent successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @PostMapping("/{teamId}/join-request")
     public ResponseEntity<?> sendJoinRequest(@PathVariable String teamId, Principal principal) {
         if (principal == null) {
@@ -183,6 +226,11 @@ public class TeamController {
         }
     }
 
+    @Operation(summary = "Leave a team", description = "Leave a team")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Left team successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @PostMapping("/{teamId}/leave")
     public ResponseEntity<?> leaveTeam(@PathVariable String teamId, Principal principal) {
         if (principal == null) {
@@ -199,6 +247,11 @@ public class TeamController {
         }
     }
 
+    @Operation(summary = "Transfer ownership of a team", description = "Transfer ownership of a team to another member")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ownership transferred successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @PostMapping("/{teamId}/transfer-ownership")
     public ResponseEntity<?> transferOwnership(@PathVariable String teamId, @RequestBody Map<String, String> requestBody, Principal principal) {
         if (principal == null) {
@@ -222,6 +275,11 @@ public class TeamController {
         }
     }
 
+    @Operation(summary = "Delete a team", description = "Delete a team")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team deleted successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @DeleteMapping("/{teamId}")
     public ResponseEntity<?> deleteTeam(@PathVariable String teamId, Principal principal) {
         if (principal == null) {
@@ -238,19 +296,37 @@ public class TeamController {
         }
     }
 
+    @Operation(summary = "List team members", description = "List all members of a team")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Members listed successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @GetMapping("/{id}/listMembers")
-    public ResponseEntity<?> listTeamMembers(@PathVariable String id) {
-        Optional<Team> team = teamService.getTeamById(id);
-        if (team.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Team not found"));
-        }
-
-        List<String> memberIds = team.get().getMemberIds();
-        List<User> members = userRepository.findAllById(memberIds); // Fetch all users in a single query
-
-        return ResponseEntity.ok(members);
+public ResponseEntity<?> listTeamMembers(@PathVariable String id) {
+    Optional<Team> team = teamService.getTeamById(id);
+    if (team.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Team not found"));
     }
 
+    List<String> memberIds = team.get().getMemberIds();
+    List<User> members = userRepository.findAllById(memberIds); // Fetch all users in a single query
+
+    // Create a list of user info with full name
+    List<Map<String, String>> memberInfo = members.stream()
+        .map(user -> Map.of(
+            "id", user.getId(),
+            "fullName", user.getFullName() // Assuming you have a getFullName() method in User
+        ))
+        .collect(Collectors.toList());
+
+    return ResponseEntity.ok(memberInfo);
+}
+
+    @Operation(summary = "Get chat messages", description = "Retrieve chat messages for a team")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Chat messages retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @GetMapping("/{teamId}/chat-messages")
     public ResponseEntity<?> getChatMessages(@PathVariable String teamId) {
         if (teamId == null || teamId.trim().isEmpty()) {

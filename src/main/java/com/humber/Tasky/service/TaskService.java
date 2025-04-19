@@ -215,6 +215,7 @@ public class TaskService {
         }
     }
 
+    @SuppressWarnings("unlikely-arg-type")
     public void leaveTask(String taskId, String userId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found"));

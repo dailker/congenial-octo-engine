@@ -16,8 +16,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.Objects;
+
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -255,21 +259,31 @@ public String profile(Principal principal, Model model) {
         if (principal == null) {
             return "redirect:/login?error=not_authenticated";
         }
-
+    
         try {
             Optional<Team> team = teamService.getTeamById(id);
             if (team.isEmpty()) {
                 model.addAttribute("error", "Team not found");
                 return "error";
             }
-
+    
             User currentUser = userService.getUserByEmail(principal.getName());
             boolean isOwner = "Owner".equals(team.get().getMemberPermissions().get(currentUser.getId()));
+    
+            List<User> members = team.get().getMemberIds().stream()
+        .map(memberId -> userService.getUserById(memberId).orElse(null))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
 
-            model.addAttribute("team", team.get()); // Pass the team object to the template
-            model.addAttribute("teamId", id); // Explicitly pass the teamId
-            model.addAttribute("isOwner", isOwner);
-            model.addAttribute("currentUserId", currentUser.getId());
+    Map<String, User> membersMap = members.stream()
+        .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        model.addAttribute("team", team.get());
+        model.addAttribute("teamId", id);
+        model.addAttribute("isOwner", isOwner);
+        model.addAttribute("currentUserId", currentUser.getId());
+        model.addAttribute("members", members);
+        model.addAttribute("membersMap", membersMap); 
             return "team";
         } catch (Exception e) {
             model.addAttribute("error", "An error occurred while loading the team");

@@ -1,237 +1,143 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::section})}">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Team Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root {
-            --primary-bg: #121212;
-            --secondary-bg: #1e1e1e;
-            --card-bg: #2d2d2d;
-            --text-primary: #ffffff;
-            --text-secondary: #b0b0b0;
-            --accent-blue: #2196F3;
-            --accent-blue-dark: #1976D2;
-            --border-color: #333333;
-        }
-
-        body {
-            background-color: var(--primary-bg);
-            color: var(--text-primary);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .container {
-            max-width: 1200px;
-            padding: 20px;
-        }
-
-        h1, h2, h3, h4 {
-            color: var(--text-primary);
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-        }
-
-        h1 {
-            border-bottom: 2px solid var(--accent-blue);
-            padding-bottom: 10px;
-            margin-bottom: 30px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-
-        .card-header {
-            background-color: var(--secondary-bg);
-            border-bottom: 1px solid var(--border-color);
-            padding: 15px 20px;
-            font-weight: 600;
-        }
-
-        .card-body {
-            padding: 20px;
-        }
-
-        .list-group {
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .list-group-item {
-            background-color: var(--secondary-bg);
-            border-color: var(--border-color);
-            color: var(--text-primary);
-            padding: 12px 20px;
+        /* --- Chat Container Styling --- */
+        .chat-container {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background-color 0.2s;
-        }
-
-        .list-group-item:hover {
-            background-color: rgba(33, 150, 243, 0.1);
-        }
-
-        .btn {
-            border-radius: 6px;
-            font-weight: 500;
-            padding: 8px 16px;
-            transition: all 0.2s;
-            border: none;
-        }
-
-        .btn-primary {
-            background-color: var(--accent-blue);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--accent-blue-dark);
-            transform: translateY(-1px);
-        }
-
-        .btn-danger {
-            background-color: #f44336;
-        }
-
-        .btn-warning {
-            background-color: #ff9800;
-            color: #000;
-        }
-
-        .btn-secondary {
-            background-color: #607d8b;
-        }
-
-        .form-control {
-            background-color: var(--secondary-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            border-radius: 6px;
-            padding: 10px 15px;
-        }
-
-        .form-control:focus {
-            background-color: var(--secondary-bg);
-            color: var(--text-primary);
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 0.25rem rgba(33, 150, 243, 0.25);
-        }
-
-        .form-label {
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        #chatMessages {
-            background-color: var(--secondary-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
+            flex-direction: column;
             height: 400px; /* Fixed height */
-            max-height: 400px; /* Optional: ensure it doesn't stretch beyond this */
-            overflow-y: auto; /* Ensures scroll if content exceeds the height */
-            margin-bottom: 15px;
-        }
-
-        .message {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .message:last-child {
-            border-bottom: none;
-        }
-
-        .message-sender {
-            font-weight: 600;
-            color: var(--accent-blue);
-            margin-bottom: 5px;
-        }
-
-        .message-time {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-left: 10px;
-        }
-
-        .message-content {
-            margin-top: 5px;
-        }
-
-        .popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: var(--card-bg);
-            padding: 25px;
+            min-height: 400px; /* Minimum height */
+            max-height: 400px; /* Maximum height */
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
             border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-            z-index: 1050; /* Ensure it stays above other elements */
-            width: 90%;
-            max-width: 500px;
+            overflow: hidden;
         }
 
-        .popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); /* Dim background */
-            z-index: 1040; /* Ensure it stays below the popup */
-        }
-
-        .action-buttons {
+        /* Scrollable message area */
+        #chatMessages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background-color: #ffffff;
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        .section-divider {
-            border-top: 1px solid var(--border-color);
-            margin: 30px 0;
+        /* Limit to 20 messages */
+        #chatMessages .message:nth-child(n+21) {
+            display: none;
         }
 
-        .file-attachment {
+        /* Show more messages when scrolled */
+        #chatMessages.show-all .message {
+            display: flex !important;
+        }
+
+        /* --- Individual Chat Message Styling --- */
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background-color: #f1f3f5;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            word-break: break-word;
+        }
+
+        /* Current user's messages should align to right */
+        .message.current-user {
+            align-self: flex-end;
+            background-color: #e3f2fd;
+            border: 1px solid #bbdefb;
+        }
+
+        /* Other users' messages */
+        .message.other-user {
+            align-self: flex-start;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+
+        /* Sender name */
+        .message strong {
+            color: #495057;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        /* Message text */
+        .message span {
+            color: #212529;
+            font-size: 0.95rem;
+        }
+
+        /* Timestamp */
+        .message-time {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        /* File badge */
+        .message a.file-badge {
             display: inline-block;
-            margin-top: 10px;
-            padding: 8px 12px;
-            background-color: rgba(33, 150, 243, 0.1);
+            margin-top: 6px;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
             border-radius: 6px;
-            color: var(--accent-blue);
+            background-color: #0d6efd;
+            color: #fff;
             text-decoration: none;
         }
 
-        .file-attachment:hover {
-            background-color: rgba(33, 150, 243, 0.2);
+        .message a.file-badge:hover {
+            background-color: #0b5ed7;
         }
 
-        .input-group {
-            margin-bottom: 15px;
+        /* Chat input form */
+        #chatForm {
+            margin-top: 15px;
         }
 
+        #chatForm .input-group {
+            gap: 8px;
+        }
+
+        #chatInput {
+            border-radius: 8px;
+            flex: 1;
+        }
+
+        #fileInput {
+            max-width: 150px;
+        }
+
+        /* Load more messages button */
+        .load-more {
+            text-align: center;
+            padding: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .load-more:hover {
+            background: #e9ecef;
+        }
+
+        /* Responsive adjustments */
         @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-            }
-            
-            .btn {
-                width: 100%;
-                margin-bottom: 10px;
+            #fileInput {
+                max-width: 100px;
             }
         }
     </style>
@@ -239,7 +145,47 @@
 <body>
 <section>
     <div class="container mt-4">
-        <h1>Team Management</h1>
+        <h1>Team: <span th:text="${team.name}"></span></h1>
+
+        <!-- Error Message -->
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <!-- Team Chat Section -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h3 class="mb-0">Team Chat</h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="chat-container">
+                    <div id="chatMessages">
+                        <div th:each="message : ${team.chatMessages}" 
+                             th:classappend="${message.senderId == currentUserId} ? 'current-user' : 'other-user'" 
+                             class="message">
+                            <div>
+                                <strong th:text="${membersMap[message.senderId]?.fullName ?: message.senderId}"></strong>:
+                                <span th:text="${message.message}"></span>
+                                <a th:if="${message.fileId}" 
+                                   th:href="@{/api/files/download/{fileId}(fileId=${message.fileId})}" 
+                                   target="_blank" 
+                                   class="badge bg-primary text-decoration-none file-badge">
+                                   <span th:text="${message.fileName} ?: 'Download File'"></span>
+                                </a>
+                            </div>
+                            <div class="message-time" th:text="${#temporals.format(message.timestamp, 'MM/dd HH:mm')}"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <form id="chatForm" class="p-3">
+                    <div class="input-group">
+                        <input type="text" id="chatInput" name="message" class="form-control" placeholder="Type a message...">
+                        <input type="file" id="fileInput" name="file" class="form-control">
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         
         <div class="row">
             <div class="col-md-6">
@@ -249,462 +195,291 @@
                     </div>
                     <div class="card-body">
                         <ul id="teamMembersList" class="list-group">
-                            <!-- Team members will be dynamically loaded here -->
+                            <li th:each="member : ${members}" class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span th:text="${member.fullName}"></span>
+                                    <small class="text-muted" th:text="'(' + ${member.email} + ')'"></small>
+                                </div>
+                                <button th:if="${isOwner}" class="btn btn-danger btn-sm"
+                                        th:attr="data-team-id=${teamId}, data-member-id=${member.id}"
+                                        onclick="removeMember(this)">
+                                    Remove
+                                </button>
+                            </li>
                         </ul>
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
                         <h3 class="mb-0">Actions</h3>
                     </div>
                     <div class="card-body">
-                        <div id="ownerActions" style="display: none;" th:if="${isOwner}">
-                            <form id="addMemberForm" class="mb-4">
+                        <div th:if="${isOwner}">
+                            <form id="addMemberForm" class="mb-4" th:action="@{/api/teams/{teamId}/invite(teamId=${teamId})}" method="post">
                                 <div class="mb-3">
                                     <label for="memberEmail" class="form-label">Add Member by Email</label>
-                                    <input type="email" id="memberEmail" class="form-control" placeholder="Enter email" required>
+                                    <input type="email" id="memberEmail" name="email" class="form-control" placeholder="Enter email" required>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Add Member</button>
                             </form>
-                            
+
                             <div class="action-buttons">
-                                <button id="transferOwnershipButton" class="btn btn-warning">Transfer Ownership</button>
-                                <button id="deleteGroupButton" class="btn btn-danger">Delete Group</button>
-                                <button id="deleteTeamButton" class="btn btn-danger">Delete Team</button>
+                                <button class="btn btn-danger mb-2" th:attr="data-team-id=${teamId}" onclick="deleteTeam(this)">Delete Team</button>
+                                <button class="btn btn-warning mb-2" th:attr="data-team-id=${teamId}" onclick="transferOwnership(this)" disabled>Transfer Ownership (🛠️)</button>
+                                <button class="btn btn-primary mb-2" th:attr="data-team-id=${teamId}" onclick="renameTeam(this)" disabled>Rename Team (🛠️)</button>
                             </div>
                         </div>
 
-                        <div id="inviteMemberActions">
-                            <button id="addUserButton" class="btn btn-primary">Add User</button>
+                        <div th:if="${!isOwner}">
+                            <button class="btn btn-danger mb-2" th:attr="data-team-id=${teamId}" onclick="leaveTeam(this)">Leave Team</button>
+                            <button class="btn btn-secondary mt-3" th:attr="data-team-id=${teamId}" onclick="copyTeamLink(this)">Copy Team Link</button>
                         </div>
-                        
-                        <div id="memberActions" style="display: none;">
-                            <button id="leaveGroupButton" class="btn btn-danger">Leave Group</button>
-                        </div>
-                        
-                        <div id="nonMemberActions" style="display: none;">
-                            <button id="joinRequestButton" class="btn btn-primary">Send Join Request</button>
-                        </div>
-                        
-                        <button id="copyLinkButton" class="btn btn-secondary mt-3">Copy Team Link</button>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Add overlay for the popup -->
-        <div id="popupOverlay" class="popup-overlay" style="display: none;"></div>
-
-        <!-- Add User Popup -->
-        <div id="addUserPopup" class="popup" style="display: none;">
-            <h4>Invite User</h4>
-            <form id="inviteUserForm">
-                <div class="mb-3">
-                    <input type="email" id="inviteEmail" class="form-control" placeholder="Enter user email" required />
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary flex-grow-1">Send Invitation</button>
-                    <button type="button" id="closeAddUserPopup" class="btn btn-secondary">Cancel</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="section-divider"></div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3 class="mb-0">Manage Members</h3>
-            </div>
-            <div class="card-body">
-                <ul id="manageMembersList" class="list-group">
-                    <!-- Members with kick option will be dynamically loaded here -->
-                </ul>
-            </div>
-        </div>
-
-        <div class="section-divider"></div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3 class="mb-0">Team Chat</h3>
-            </div>
-            <div class="card-body">
-                <div id="chatMessages">
-                    <!-- Chat messages will be dynamically loaded here -->
-                </div>
-                <form id="chatForm">
-                    <div class="input-group">
-                        <input type="text" id="chatInput" class="form-control" placeholder="Type a message..." required>
-                        <input type="file" id="fileInput" class="form-control" style="max-width: 200px;">
-                        <button type="submit" class="btn btn-primary">Send</button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
 
+    <script th:inline="javascript">
+        let teamId = [[${teamId}]];
+        let currentUserId = [[${currentUserId}]];
+        let isOwner = [[${isOwner}]];
+        let membersMap = [[${membersMap}]]
+    </script>
+
+    <!-- WebSocket and Actions -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script>
-        const currentUrl = window.location.href;
-        const match = currentUrl.match(/\/teams\/([a-f0-9]{24})/);
+        const stompClient = (function() {
+            const socket = new SockJS('/ws');
+            return Stomp.over(socket);
+        })();
 
-        let teamId = '';
-        if (match) {
-            teamId = match[1];  // match[1] is the captured team ID
-            console.log('Extracted team ID:', teamId);
-        } else {
-            console.warn('Team ID not found in URL');
-        }
+        stompClient.connect({}, function () {
+            // Subscribe to team member updates
+            // Subscribe to team member updates
+stompClient.subscribe('/topic/team/' + teamId + '/members', function (message) {
+    const members = JSON.parse(message.body);
+    const membersList = document.getElementById('teamMembersList');
+    membersList.innerHTML = '';
+    
+    // Update membersMap
+    members.forEach(member => {
+        membersMap[member.id] = member;
+        
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `
+            <div>
+                <span>${member.fullName}</span>
+                <small class="text-muted">(${member.email})</small>
+            </div>
+            
+        `;
+        membersList.appendChild(li);
+    });
+});
 
-        const currentUserId = 'currentUserId'; // Replace with the actual current user ID
-
-        // Check if the current user is the owner
-        async function checkOwnerStatus() {
-            try {
-                const response = await fetch(`/api/teams/${teamId}`);
-                if (response.ok) {
-                    const team = await response.json();
-                    const isOwner = team.memberPermissions[currentUserId] === 'Owner';
-                    if (isOwner) {
-                        document.getElementById('ownerActions').style.display = 'block';
-                    }
-                } else {
-                    console.error('Failed to fetch team details.');
-                }
-            } catch (error) {
-                console.error('Error checking owner status:', error);
-            }
-        }
-
-        // WebSocket setup
-        if (!window.socket) {
-            window.socket = new SockJS('/ws'); // Avoid duplicate declarations
-        }
-        const stompClient = Stomp.over(window.socket);
-
-        stompClient.connect({}, () => {
-            // Subscribe to member updates
-            stompClient.subscribe(`/topic/team/${teamId}/members`, (message) => {
-                const members = JSON.parse(message.body);
-                updateMembersList(members);
-            });
-
-            // Subscribe to chat updates
-            stompClient.subscribe(`/topic/team/${teamId}`, (message) => {
-                const chatMessage = JSON.parse(message.body);
-
-                // Only display the message if it was not sent by the current user
-                if (chatMessage.senderId !== currentUserId) {
-                    displayChatMessage(chatMessage);
-                }
-            });
-
-            // Request the initial list of chat messages
-            if (teamId && teamId.trim() !== '') {
-                fetch(`/api/teams/${teamId}/chat-messages`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Failed to fetch chat messages: ${response.statusText}`);
-                        }
-                        return response.json();
-                    })
-                    .then(messages => {
-                        if (!Array.isArray(messages)) {
-                            throw new TypeError('Expected an array of messages');
-                        }
-                        messages.forEach(displayChatMessage);
-                    })
-                    .catch(error => console.error('Error loading chat messages:', error));
-            } else {
-                console.error('Cannot fetch chat messages: teamId is missing or invalid.');
-            }
+            // Subscribe to team chat messages
+stompClient.subscribe('/topic/team/' + teamId, function (message) {
+    const chatMessages = document.getElementById('chatMessages');
+    const msg = JSON.parse(message.body);
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message';
+    
+    // Format timestamp
+    const timestamp = new Date(msg.timestamp);
+    const formattedTime = `${timestamp.getMonth()+1}/${timestamp.getDate()} ${timestamp.getHours()}:${timestamp.getMinutes().toString().padStart(2, '0')}`;
+    
+    // Get sender's full name from membersMap, fallback to ID if not found
+    const sender = membersMap[msg.senderId] || { fullName: msg.senderId };
+    
+    messageDiv.innerHTML = `
+        <div>
+            <strong>${sender.fullName}</strong>:
+            <span>${msg.message || ''}</span>
+            ${msg.fileId ? 
+                `<a href="/api/files/download/${msg.fileId}" 
+                   target="_blank" 
+                   class="badge bg-primary text-decoration-none file-badge">
+                   ${msg.fileName || 'Download File'}
+                </a>` : ''}
+        </div>
+        <div class="message-time">${formattedTime}</div>
+    `;
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+});
         });
 
-        // Prevent page refresh and send message via WebSocket
-        const chatForm = document.getElementById('chatForm');
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Prevent page refresh
-            const chatInput = document.getElementById('chatInput');
+        document.getElementById('chatForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const messageInput = document.getElementById('chatInput');
             const fileInput = document.getElementById('fileInput');
-            const message = chatInput.value.trim();
+            const messageText = messageInput.value.trim();
             const file = fileInput.files[0];
 
-            let fileUrl = null;
+            if (!messageText && !file) return;
 
             if (file) {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                try {
-                    const response = await fetch('/api/files/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
+                fetch('/api/files/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('File upload failed');
+                    return response.json();
+                })
+                .then(data => {
+                    const chatMessage = {
+                        senderId: currentUserId,
+                        message: messageText,
+                        fileId: data.id,
+                        fileName: data.name,
+                        fileType: data.contentType,
+                        timestamp: new Date().toISOString()
+                    };
+                    stompClient.send(`/app/team/${teamId}/chat-with-file`, {}, JSON.stringify(chatMessage));
+                    messageInput.value = '';
+                    fileInput.value = '';
+                })
+                .catch(err => {
+                    console.error('File upload failed:', err);
+                    alert('Failed to upload file');
+                });
+            } else {
+                const chatMessage = {
+                    senderId: currentUserId,
+                    message: messageText,
+                    timestamp: new Date().toISOString()
+                };
+                stompClient.send(`/app/team/${teamId}/chat`, {}, JSON.stringify(chatMessage));
+                messageInput.value = '';
+            }
+        });
 
-                    if (!response.ok) {
-                        throw new Error('File upload failed');
+        function removeMember(button) {
+            const teamId = button.getAttribute('data-team-id');
+            const memberId = button.getAttribute('data-member-id');
+            if (confirm('Are you sure you want to remove this member?')) {
+                fetch(`/api/teams/${teamId}/remove-member/${memberId}`, { 
+                    method: 'DELETE' 
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to remove member');
+                    return response.json();
+                })
+                .then(data => {
+                    alert(data.message);
+                })
+                .catch(err => {
+                    console.error('Error removing member:', err);
+                    alert('Failed to remove member');
+                });
+            }
+        }
+
+        function leaveTeam(button) {
+            const teamId = button.getAttribute('data-team-id');
+            if (confirm('Are you sure you want to leave this team?')) {
+                fetch(`/api/teams/${teamId}/leave`, { 
+                    method: 'POST' 
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/teams';
+                    } else {
+                        throw new Error('Failed to leave team');
                     }
-
-                    const data = await response.json();
-                    fileUrl = data.fileUrl;
-                } catch (error) {
-                    console.error('Error uploading file:', error);
-                    alert('Failed to upload file.');
-                    return;
-                }
+                })
+                .catch(err => {
+                    console.error('Error leaving team:', err);
+                    alert('Failed to leave team');
+                });
             }
-
-            const chatMessage = {
-                senderId: currentUserId, // Replace with the actual sender ID
-                message: message,
-                fileUrl: fileUrl,
-                timestamp: new Date().toISOString()
-            };
-
-            // Send the message via WebSocket
-            stompClient.send(`/app/team/${teamId}/chat-with-file`, {}, JSON.stringify(chatMessage));
-
-            // Display the message locally
-            displayChatMessage(chatMessage);
-
-            // Clear the input fields
-            chatInput.value = '';
-            fileInput.value = '';
-        });
-
-        function updateMembersList(members) {
-            const membersList = document.getElementById('teamMembersList');
-            membersList.innerHTML = ''; // Clear the current list
-            members.forEach(member => {
-                const listItem = document.createElement('li');
-                listItem.className = 'list-group-item';
-                listItem.textContent = member.fullName; // Display the member's full name
-                membersList.appendChild(listItem);
-            });
         }
 
-        function displayChatMessage(chatMessage) {
-            const chatMessagesDiv = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message';
-
-            // Display sender and timestamp
-            const senderInfo = document.createElement('div');
-            senderInfo.className = 'message-sender';
-            
-            const senderSpan = document.createElement('span');
-            senderSpan.textContent = chatMessage.senderId;
-            
-            const timeSpan = document.createElement('span');
-            timeSpan.className = 'message-time';
-            timeSpan.textContent = new Date(chatMessage.timestamp).toLocaleString();
-            
-            senderInfo.appendChild(senderSpan);
-            senderInfo.appendChild(timeSpan);
-            messageDiv.appendChild(senderInfo);
-
-            // Display text message
-            if (chatMessage.message) {
-                const textMessage = document.createElement('div');
-                textMessage.className = 'message-content';
-                textMessage.textContent = chatMessage.message;
-                messageDiv.appendChild(textMessage);
+        function deleteTeam(button) {
+            const teamId = button.getAttribute('data-team-id');
+            if (confirm('Are you sure you want to delete this team? This action cannot be undone.')) {
+                fetch(`/api/teams/${teamId}`, { 
+                    method: 'DELETE' 
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/teams';
+                    } else {
+                        throw new Error('Failed to delete team');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error deleting team:', err);
+                    alert('Failed to delete team');
+                });
             }
-
-            // Display file (if any)
-            if (chatMessage.fileUrl) {
-                const fileUrl = chatMessage.fileUrl;
-                const fileName = fileUrl.split('/').pop();
-                const fileExtension = fileName.split('.').pop().toLowerCase();
-
-                if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
-                    // Display image or GIF
-                    const img = document.createElement('img');
-                    img.src = `/api/files/download/${fileName}`;
-                    img.alt = 'Attachment';
-                    img.style.maxWidth = '100px';
-                    img.style.cursor = 'pointer';
-                    img.style.marginTop = '10px';
-                    img.style.borderRadius = '4px';
-                    img.onclick = () => openImageInModal(`/api/files/download/${fileName}`);
-                    messageDiv.appendChild(img);
-                } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
-                    // Display video
-                    const video = document.createElement('video');
-                    video.src = `/api/files/download/${fileName}`;
-                    video.controls = true;
-                    video.style.maxWidth = '200px';
-                    video.style.marginTop = '10px';
-                    video.style.borderRadius = '4px';
-                    messageDiv.appendChild(video);
-                } else {
-                    // Display as a downloadable link
-                    const link = document.createElement('a');
-                    link.href = `/api/files/download/${fileName}`;
-                    link.className = 'file-attachment';
-                    link.textContent = `Download ${fileName}`;
-                    link.target = '_blank';
-                    messageDiv.appendChild(link);
-                }
-            }
-
-            chatMessagesDiv.appendChild(messageDiv);
-
-            // Scroll to the bottom of the chat window
-            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
         }
 
-        function openImageInModal(imageUrl) {
-            const modal = document.createElement('div');
-            modal.style.position = 'fixed';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.width = '100%';
-            modal.style.height = '100%';
-            modal.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
-            modal.style.display = 'flex';
-            modal.style.justifyContent = 'center';
-            modal.style.alignItems = 'center';
-            modal.style.zIndex = '1000';
-            modal.style.cursor = 'zoom-out';
-
-            const img = document.createElement('img');
-            img.src = imageUrl;
-            img.style.maxWidth = '90%';
-            img.style.maxHeight = '90%';
-            img.style.objectFit = 'contain';
-            img.style.borderRadius = '8px';
-            modal.appendChild(img);
-
-            modal.onclick = () => document.body.removeChild(modal);
-            document.body.appendChild(modal);
-        }
-
-        // Show Add User Popup with overlay
-        document.getElementById('addUserButton').addEventListener('click', () => {
-            document.getElementById('popupOverlay').style.display = 'block';
-            document.getElementById('addUserPopup').style.display = 'block';
-        });
-
-        // Close Add User Popup and overlay
-        document.getElementById('closeAddUserPopup').addEventListener('click', () => {
-            document.getElementById('popupOverlay').style.display = 'none';
-            document.getElementById('addUserPopup').style.display = 'none';
-        });
-
-        // Close popup when clicking on the overlay
-        document.getElementById('popupOverlay').addEventListener('click', () => {
-            document.getElementById('popupOverlay').style.display = 'none';
-            document.getElementById('addUserPopup').style.display = 'none';
-        });
-
-        // Handle Invite User Form Submission
-        document.getElementById('inviteUserForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('inviteEmail').value.trim();
-            if (!email) return;
-
-            try {
-                const response = await fetch(`/api/teams/${teamId}/invite`, {
+        function transferOwnership(button) {
+            const teamId = button.getAttribute('data-team-id');
+            const newOwnerId = prompt('Enter the ID of the new owner:');
+            if (newOwnerId) {
+                fetch(`/api/teams/${teamId}/transfer-ownership`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
+                    body: JSON.stringify({ newOwnerId })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to transfer ownership');
+                    return response.json();
+                })
+                .then(data => {
+                    alert(data.message);
+                })
+                .catch(err => {
+                    console.error('Error transferring ownership:', err);
+                    alert('Failed to transfer ownership');
                 });
-
-                if (response.ok) {
-                    alert('Invitation sent successfully!');
-                    document.getElementById('addUserPopup').style.display = 'none';
-                    document.getElementById('popupOverlay').style.display = 'none';
-                } else {
-                    const error = await response.json();
-                    alert(error.message || 'Failed to send invitation.');
-                }
-            } catch (error) {
-                console.error('Error inviting user:', error);
-                alert('Failed to send invitation.');
-            }
-        });
-
-        // Handle Delete Team
-        document.getElementById('deleteTeamButton').addEventListener('click', async () => {
-            if (!confirm('Are you sure you want to delete this team? This action cannot be undone.')) return;
-
-            try {
-                const response = await fetch(`/api/teams/${teamId}`, { method: 'DELETE' });
-                if (response.ok) {
-                    alert('Team deleted successfully!');
-                    window.location.href = '/teams';
-                } else {
-                    const error = await response.json();
-                    alert(error.message || 'Failed to delete team.');
-                }
-            } catch (error) {
-                console.error('Error deleting team:', error);
-                alert('Failed to delete team.');
-            }
-        });
-
-        // Load Members with Kick Option
-        function loadManageMembers(members) {
-            const manageMembersList = document.getElementById('manageMembersList');
-            manageMembersList.innerHTML = ''; // Clear the current list
-            members.forEach(member => {
-                const listItem = document.createElement('li');
-                listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-                listItem.textContent = member.fullName;
-
-                const kickButton = document.createElement('button');
-                kickButton.className = 'btn btn-danger btn-sm';
-                kickButton.textContent = 'Kick';
-                kickButton.addEventListener('click', async () => {
-                    if (!confirm(`Are you sure you want to kick ${member.fullName}?`)) return;
-
-                    try {
-                        const response = await fetch(`/api/teams/${teamId}/remove-member/${member.id}?requesterId=${currentUserId}`, {
-                            method: 'DELETE'
-                        });
-
-                        if (response.ok) {
-                            alert(`${member.fullName} has been removed from the team.`);
-                            loadTeamMembers(); // Reload members
-                        } else {
-                            const error = await response.json();
-                            alert(error.message || 'Failed to remove member.');
-                        }
-                    } catch (error) {
-                        console.error('Error removing member:', error);
-                        alert('Failed to remove member.');
-                    }
-                });
-
-                listItem.appendChild(kickButton);
-                manageMembersList.appendChild(listItem);
-            });
-        }
-
-        // Load Team Members and Manage Members
-        async function loadTeamMembers() {
-            try {
-                const response = await fetch(`/api/teams/${teamId}/listMembers`);
-                if (response.ok) {
-                    const members = await response.json();
-                    updateMembersList(members); // Update the main members list
-                    loadManageMembers(members); // Load members with kick option
-                } else {
-                    console.error('Failed to load team members.');
-                }
-            } catch (error) {
-                console.error('Error loading team members:', error);
             }
         }
 
-        // Initial Load
-        checkOwnerStatus();
-        loadTeamMembers();
+        function renameTeam(button) {
+            const teamId = button.getAttribute('data-team-id');
+            const newName = prompt('Enter the new team name:');
+            if (newName) {
+                fetch(`/api/teams/${teamId}/rename`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to rename team');
+                    return response.json();
+                })
+                .then(data => {
+                    alert(data.message);
+                    window.location.reload();
+                })
+                .catch(err => {
+                    console.error('Error renaming team:', err);
+                    alert('Failed to rename team');
+                });
+            }
+        }
+
+        function copyTeamLink(button) {
+            const teamId = button.getAttribute('data-team-id');
+            const link = `${window.location.origin}/teams/${teamId}`;
+            navigator.clipboard.writeText(link)
+                .then(() => alert('Team link copied to clipboard!'))
+                .catch(err => console.error('Failed to copy link:', err));
+        }
     </script>
 </section>
 </body>

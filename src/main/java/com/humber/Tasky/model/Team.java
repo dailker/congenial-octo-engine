@@ -16,11 +16,11 @@ public class Team {
 
     private String name;
 
-    private List<String> memberIds = new ArrayList<>(); // Initialize the list
-    private List<String> invitations = new ArrayList<>(); // Store email invitations
-    private Map<String, String> memberPermissions = new HashMap<>(); // Map userId to permission (Owner/User)
+    private List<String> memberIds = new ArrayList<>();
+    private List<String> invitations = new ArrayList<>();
+    private Map<String, String> memberPermissions = new HashMap<>();
     @DBRef(lazy = true)
-    private List<ChatMessage> chatMessages = new ArrayList<>(); // Use DBRef for chat messages
+    private List<ChatMessage> chatMessages = new ArrayList<>();
 
     // Getters and Setters
     public String getId() { return id; }
@@ -41,14 +41,29 @@ public class Team {
         private String id;
         private String senderId;
         private String message;
-        private String fileUrl; // Optional file URL
+        private String fileId;  // Changed from fileUrl to fileId to match template
+        private String fileName; // Added to store original filename
+        private String fileType; // Added to store file type
         private LocalDateTime timestamp;
 
-        public ChatMessage(String senderId, String message, String fileUrl) {
+        // Default constructor
+        public ChatMessage() {
+            this.timestamp = LocalDateTime.now();
+        }
+
+        // Constructor for text messages
+        public ChatMessage(String senderId, String message) {
+            this();
             this.senderId = senderId;
             this.message = message;
-            this.fileUrl = fileUrl;
-            this.timestamp = LocalDateTime.now();
+        }
+
+        // Constructor for file messages
+        public ChatMessage(String senderId, String message, String fileId, String fileName, String fileType) {
+            this(senderId, message);
+            this.fileId = fileId;
+            this.fileName = fileName;
+            this.fileType = fileType;
         }
 
         // Getters and setters
@@ -58,9 +73,18 @@ public class Team {
         public void setSenderId(String senderId) { this.senderId = senderId; }
         public String getMessage() { return message; }
         public void setMessage(String message) { this.message = message; }
-        public String getFileUrl() { return fileUrl; }
-        public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
+        public String getFileId() { return fileId; }
+        public void setFileId(String fileId) { this.fileId = fileId; }
+        public String getFileName() { return fileName; }
+        public void setFileName(String fileName) { this.fileName = fileName; }
+        public String getFileType() { return fileType; }
+        public void setFileType(String fileType) { this.fileType = fileType; }
         public LocalDateTime getTimestamp() { return timestamp; }
         public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+
+        // Helper method to check if message has file
+        public boolean hasFile() {
+            return fileId != null && !fileId.isEmpty();
+        }
     }
 }

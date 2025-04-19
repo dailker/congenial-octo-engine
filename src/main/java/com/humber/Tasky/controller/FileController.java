@@ -1,56 +1,73 @@
 package com.humber.Tasky.controller;
 
+import com.humber.Tasky.model.File;
+import com.humber.Tasky.repository.FileRepository;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+import com.humber.Tasky.model.Team.ChatMessage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 @RestController
+@Tag(name = "File", description = "File API")
 @RequestMapping("/api/files")
 public class FileController {
 
-    private static final String UPLOAD_DIR = "uploads/";
+    @Autowired
+    private FileRepository fileRepository;
 
+    @Operation(summary = "Upload a file", description = "Upload a file and return the file ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "File uploaded successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "File upload failed")
+    })
     @PostMapping("/upload")
-    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file,
+                                        @RequestParam("uploaderId") String uploaderId) {
         try {
+            // Generate a unique filename and store the file
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path filePath = Paths.get(UPLOAD_DIR, fileName);
-            Files.createDirectories(filePath.getParent());
-            Files.write(filePath, file.getBytes());
-            return ResponseEntity.ok(Map.of("fileUrl", "/uploads/" + fileName));
+            File dbFile = new File(fileName, file.getContentType(), file.getBytes(), uploaderId);
+            File savedFile = fileRepository.save(dbFile);
+
+            // Return the file ID so it can be used in the chat message
+            return ResponseEntity.ok(Map.of("fileId", savedFile.getId(),
+                                            "fileName", savedFile.getName(),
+                                            "fileType", savedFile.getContentType()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("message", "File upload failed"));
         }
     }
 
-    @GetMapping("/download/{fileName}")
-    public ResponseEntity<?> downloadFile(@PathVariable String fileName) {
-        try {
-            Path filePath = Paths.get(UPLOAD_DIR, fileName);
-            if (!Files.exists(filePath)) {
-                return ResponseEntity.status(404).body("File not found");
-            }
-
-            byte[] fileContent = Files.readAllBytes(filePath);
-
-            String contentDisposition = "attachment; filename=\"" + fileName + "\"";
-            String htmlResponse = "<html><body>" +
-                    "<script>window.close();</script>" +
-                    "</body></html>";
-
-            return ResponseEntity.ok()
-                    .header("Content-Disposition", contentDisposition)
-                    .header("Content-Type", "application/octet-stream")
-                    .header("Content-Length", String.valueOf(fileContent.length))
-                    .body(fileContent);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error downloading file: " + e.getMessage());
+    @Operation(summary = "Download a file", description = "Download a file by its ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "File downloaded successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "File not found")
+    })
+    @GetMapping("/download/{id}")
+    public ResponseEntity<?> downloadFile(@PathVariable String id) {
+        Optional<File> optionalFile = fileRepository.findById(id);
+        if (optionalFile.isEmpty()) {
+            return ResponseEntity.status(404).body("File not found");
         }
+
+        File file = optionalFile.get();
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"")
+                .header("Content-Type", file.getContentType())
+                .header("Content-Length", String.valueOf(file.getContent().length))
+                .body(file.getContent());
     }
 }

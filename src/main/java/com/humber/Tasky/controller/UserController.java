@@ -3,6 +3,11 @@ package com.humber.Tasky.controller;
 import com.humber.Tasky.model.FriendRequest;
 import com.humber.Tasky.model.User;
 import com.humber.Tasky.service.UserService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -12,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@Tag(name = "User", description = "User management APIs")
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
@@ -20,6 +26,12 @@ public class UserController {
         this.userService = userService;
     }
 
+    @Operation(summary = "Send a friend request", description = "Send a friend request to another user")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Friend request sent successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     @PostMapping("/friend-request")
     public ResponseEntity<?> sendFriendRequest(@RequestParam String recipientEmail, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -39,6 +51,12 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Accept a friend request", description = "Accept a friend request from another user")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Friend request accepted successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     @PostMapping("/friends/accept/{requestId}")
     public ResponseEntity<?> acceptFriendRequest(@PathVariable String requestId, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -59,6 +77,12 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Reject a friend request", description = "Reject a friend request from another user")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Friend request rejected successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     @PostMapping("/friends/reject/{requestId}")
     public ResponseEntity<?> rejectFriendRequest(@PathVariable String requestId, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -76,6 +100,12 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Remove a friend", description = "Remove a friend from the user's friend list")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Friend removed successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     @DeleteMapping("/friends/{friendId}")
     public void removeFriend(@PathVariable String friendId, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -86,6 +116,11 @@ public class UserController {
         userService.removeFriend(currentUserEmail, friendId);
     }
 
+    @Operation(summary = "Get pending friend requests", description = "Retrieve a list of pending friend requests for the user")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pending friend requests retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     @GetMapping("/friends/requests")
     public List<FriendRequest> getPendingFriendRequests(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -96,6 +131,11 @@ public class UserController {
         return userService.getPendingFriendRequests(currentUserEmail);
     }
 
+    @Operation(summary = "Check if users are connected", description = "Check if two users are connected as friends")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Users are connected"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     @GetMapping("/friends/check/{userId}")
     public boolean areUsersConnected(@PathVariable String userId, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -106,6 +146,11 @@ public class UserController {
         return userService.areUsersConnected(currentUserEmail, userId);
     }
 
+    @Operation(summary = "Get online friends", description = "Retrieve a list of online friends for the user")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Online friends retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     @GetMapping("/onlineUsers")
     public ResponseEntity<List<User>> getOnlineUsers() {
         List<User> onlineUsers = userService.getOnlineUsers();

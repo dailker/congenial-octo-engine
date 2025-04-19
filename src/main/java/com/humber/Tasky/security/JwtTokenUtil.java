@@ -29,6 +29,7 @@ public class JwtTokenUtil {
         return createToken(claims, userDetails.getUsername());
     }
 
+    @SuppressWarnings("deprecation")
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .setClaims(claims)
@@ -57,6 +58,7 @@ public class JwtTokenUtil {
         return claimsResolver.apply(claims);
     }
 
+    @SuppressWarnings("deprecation")
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .setSigningKey(getSigningKey())

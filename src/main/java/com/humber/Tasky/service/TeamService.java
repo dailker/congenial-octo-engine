@@ -38,6 +38,7 @@ public class TeamService {
     public void addMemberToTeam(String teamId, String userId) {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
+        @SuppressWarnings("unused")
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 

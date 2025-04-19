@@ -6,6 +6,9 @@ import com.humber.Tasky.model.Task;
 import com.humber.Tasky.model.User;
 import com.humber.Tasky.repository.TaskRepository;
 import com.humber.Tasky.service.UserService;
+
+import io.swagger.v3.oas.annotations.Hidden;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Hidden
 @ControllerAdvice
 public class GlobalControllerAdvice {
 

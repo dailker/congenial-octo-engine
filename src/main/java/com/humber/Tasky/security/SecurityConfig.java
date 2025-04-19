@@ -25,6 +25,7 @@ public class SecurityConfig {
         this.customUserDetailsService = customUserDetailsService;
     }
 
+    @SuppressWarnings("removal")
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -42,7 +43,12 @@ public class SecurityConfig {
                     "/js/**", 
                     "/images/**", 
                     "/error", 
-                    "/favicon.ico"
+                    "/favicon.ico",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/v2/api-docs/**",
+                    "/swagger-ui.html",
+                    "/swagger-ui/**"
                 ).permitAll() // Publicly accessible endpoints
                 .requestMatchers("/api/auth/**", "/api/users/friends/accept/**", "/api/users/friends/reject/**").permitAll() // Allow specific API endpoints
                 .requestMatchers(
