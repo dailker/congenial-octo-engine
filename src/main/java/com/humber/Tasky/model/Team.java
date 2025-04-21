@@ -15,6 +15,7 @@ public class Team {
     private String id;
 
     private String name;
+    private String ownerId;
 
     private List<String> memberIds = new ArrayList<>();
     private List<String> invitations = new ArrayList<>();
@@ -36,15 +37,26 @@ public class Team {
     public List<ChatMessage> getChatMessages() { return chatMessages; }
     public void setChatMessages(List<ChatMessage> chatMessages) { this.chatMessages = chatMessages; }
 
+
+    // Add getter and setter for ownerId
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+    }
+
     public static class ChatMessage {
         @Id
         private String id;
         private String senderId;
-        private String message;
+        private String message;// Added ownerId field
         private String fileId;  // Changed from fileUrl to fileId to match template
         private String fileName; // Added to store original filename
         private String fileType; // Added to store file type
         private LocalDateTime timestamp;
+
 
         // Default constructor
         public ChatMessage() {

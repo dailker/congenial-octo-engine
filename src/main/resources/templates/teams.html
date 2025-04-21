@@ -2,36 +2,114 @@
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::section})}">
 <head>
     <title>Teams</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 <section>
     <div class="container mt-4">
         <h1>Teams</h1>
-        <div id="teamsList">
-            <!-- Teams will be dynamically loaded here -->
+        
+        <!-- Team Invitations Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Team Invitations</h4>
+            </div>
+            <div class="card-body">
+                <div id="invitationsList" class="list-group">
+                    <!-- Invitations will be dynamically loaded here -->
+                </div>
+            </div>
         </div>
-        <a href="/create-team" class="btn btn-primary mt-3">Create New Team</a>
+        
+        <!-- Your Teams Section -->
+        <div class="card">
+            <div class="card-header">
+                <h4>Your Teams</h4>
+            </div>
+            <div class="card-body">
+                <div id="teamsList" class="list-group">
+                    <!-- Teams will be dynamically loaded here -->
+                </div>
+                <a href="/create-team" class="btn btn-primary mt-3">Create New Team</a>
+            </div>
+        </div>
     </div>
 
     <script>
+        // Load teams
         fetch('/api/teams')
             .then(response => response.json())
             .then(teams => {
                 const teamsList = document.getElementById('teamsList');
+                if (teams.length === 0) {
+                    teamsList.innerHTML = '<p class="text-muted">You are not a member of any teams yet.</p>';
+                    return;
+                }
                 teams.forEach(team => {
                     const teamDiv = document.createElement('div');
-                    teamDiv.className = 'card mb-3';
+                    teamDiv.className = 'list-group-item';
                     teamDiv.innerHTML = `
-                        <div class="card-body">
-                            <h5 class="card-title">${team.name}</h5>
-                            <p class="card-text">Members: ${team.memberIds.length}</p>
-                            <a href="/teams/${team.id}" class="btn btn-primary">View Team</a>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">${team.name}</h5>
+                                <small>Members: ${team.memberIds.length}</small>
+                            </div>
+                            <a href="/teams/${team.id}" class="btn btn-primary btn-sm">View Team</a>
                         </div>
                     `;
                     teamsList.appendChild(teamDiv);
                 });
             })
             .catch(error => console.error('Error fetching teams:', error));
+
+        // Load team invitations
+        fetch('/api/teams/invitations')
+            .then(response => response.json())
+            .then(invitations => {
+                const invitationsList = document.getElementById('invitationsList');
+                if (invitations.length === 0) {
+                    invitationsList.innerHTML = '<p class="text-muted">You have no pending team invitations.</p>';
+                    return;
+                }
+                invitations.forEach(invitation => {
+                    const invitationDiv = document.createElement('div');
+                    invitationDiv.className = 'list-group-item';
+                    invitationDiv.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">${invitation.teamName}</h5>
+                                <small>Invited by: ${invitation.ownerEmail}</small>
+                            </div>
+                            <div>
+                                <button onclick="handleInvitation('${invitation.teamId}', 'accept')" class="btn btn-success btn-sm me-2">Accept</button>
+                                <button onclick="handleInvitation('${invitation.teamId}', 'reject')" class="btn btn-danger btn-sm">Reject</button>
+                            </div>
+                        </div>
+                    `;
+                    invitationsList.appendChild(invitationDiv);
+                });
+            })
+            .catch(error => console.error('Error fetching invitations:', error));
+
+        // Handle team invitation (accept/reject)
+        function handleInvitation(teamId, action) {
+            fetch(`/api/teams/${teamId}/invitations/${action}`, {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload(); // Refresh to show updated list
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Failed to process invitation');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'Failed to process invitation');
+            });
+        }
     </script>
 </section>
 </body>

@@ -28,6 +28,7 @@ public class TeamService {
         if (team.getName() == null || team.getName().trim().isEmpty()) {
             throw new RuntimeException("Team name cannot be empty");
         }
+        // The team creator is already set in the controller
         return teamRepository.save(team);
     }
 
@@ -80,24 +81,6 @@ public class TeamService {
         }
     }
 
-    public void sendMessageToTeam(String teamId, String senderId, String message, String fileUrl) {
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new RuntimeException("Team not found"));
-        team.getChatMessages().add(new Team.ChatMessage(senderId, message, fileUrl));
-        teamRepository.save(team);
-    }
-
-    public void removeMemberFromTeam(String teamId, String userId, String requesterId) {
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new RuntimeException("Team not found"));
-        if (!team.getMemberPermissions().get(requesterId).equals("Owner")) {
-            throw new RuntimeException("Only the owner can remove members");
-        }
-        team.getMemberIds().remove(userId);
-        team.getMemberPermissions().remove(userId);
-        teamRepository.save(team);
-    }
-
     public void sendJoinRequest(String teamId, String userId) {
         Team team = teamRepository.findById(teamId).orElseThrow(() -> new RuntimeException("Team not found"));
         if (team.getMemberIds().contains(userId)) {
@@ -107,6 +90,42 @@ public class TeamService {
             throw new RuntimeException("You have already sent a join request");
         }
         team.getInvitations().add(userId);
+        teamRepository.save(team);
+    }
+
+    public void acceptJoinRequest(String teamId, String userId, String ownerId) {
+        Team team = teamRepository.findById(teamId)
+            .orElseThrow(() -> new RuntimeException("Team not found"));
+        
+        if (!team.getMemberPermissions().get(ownerId).equals("Owner")) {
+            throw new RuntimeException("Only owner can accept requests");
+        }
+        
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (!team.getInvitations().contains(user.getEmail())) {
+            throw new RuntimeException("No pending request from this user");
+        }
+        
+        team.getInvitations().remove(user.getEmail());
+        team.getMemberIds().add(userId);
+        team.getMemberPermissions().put(userId, "Member");
+        teamRepository.save(team);
+    }
+    
+    public void rejectJoinRequest(String teamId, String userId, String ownerId) {
+        Team team = teamRepository.findById(teamId)
+            .orElseThrow(() -> new RuntimeException("Team not found"));
+        
+        if (!team.getMemberPermissions().get(ownerId).equals("Owner")) {
+            throw new RuntimeException("Only owner can reject requests");
+        }
+        
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        team.getInvitations().remove(user.getEmail());
         teamRepository.save(team);
     }
 
@@ -149,4 +168,35 @@ public class TeamService {
                 .filter(team -> team.getMemberIds().contains(userId))
                 .collect(Collectors.toList());
     }
+
+    public List<Team> getTeamsWithInvitationsForUser(String userEmail) {
+        return teamRepository.findAll().stream()
+                .filter(team -> team.getInvitations().contains(userEmail))
+                .collect(Collectors.toList());
+    }
+
+    public void acceptInvitation(String teamId, String userId, String userEmail) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+
+        if (!team.getInvitations().contains(userEmail)) {
+            throw new RuntimeException("No pending invitation for this team");
+        }
+
+        // Remove the invitation and add the user as a member
+        team.getInvitations().remove(userEmail);
+        team.getMemberIds().add(userId);
+        team.getMemberPermissions().put(userId, "Member");
+        teamRepository.save(team);
+    }
+
+    public void rejectInvitation(String teamId, String userEmail) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+
+        team.getInvitations().remove(userEmail);
+        teamRepository.save(team);
+    }
 }
+
+

@@ -218,12 +218,12 @@
                     </div>
                     <div class="card-body">
                         <div th:if="${isOwner}">
-                            <form id="addMemberForm" class="mb-4" th:action="@{/api/teams/{teamId}/invite(teamId=${teamId})}" method="post">
+                            <form id="addMemberForm" class="mb-4" onsubmit="inviteMember(event)">
                                 <div class="mb-3">
-                                    <label for="memberEmail" class="form-label">Add Member by Email</label>
+                                    <label for="memberEmail" class="form-label">Invite Member by Email</label>
                                     <input type="email" id="memberEmail" name="email" class="form-control" placeholder="Enter email" required>
                                 </div>
-                                <button type="submit" class="btn btn-primary">Add Member</button>
+                                <button type="submit" class="btn btn-primary">Invite Member</button>
                             </form>
 
                             <div class="action-buttons">
@@ -254,6 +254,29 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script>
+
+function inviteMember(event) {
+        event.preventDefault();
+        const email = document.getElementById('memberEmail').value;
+        
+        fetch(`/api/teams/${teamId}/invite`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            document.getElementById('memberEmail').value = '';
+        })
+        .catch(err => {
+            console.error('Error inviting member:', err);
+            alert('Failed to invite member');
+        });
+    }
+    
         const stompClient = (function() {
             const socket = new SockJS('/ws');
             return Stomp.over(socket);

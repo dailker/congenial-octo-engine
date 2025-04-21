@@ -119,32 +119,6 @@ public class TeamController {
         }
     }
 
-    @Operation(summary = "Remove a member from a team", description = "Remove a member from a team by their ID")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Member removed successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
-    })
-    @DeleteMapping("/{teamId}/remove-member/{userId}")
-    public ResponseEntity<?> removeMemberFromTeam(@PathVariable String teamId, @PathVariable String userId,
-                                                  @RequestParam String requesterId) {
-        if (teamId == null || teamId.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Team ID is required"));
-        }
-        if (userId == null || userId.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "User ID is required"));
-        }
-        if (requesterId == null || requesterId.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Requester ID is required"));
-        }
-
-        try {
-            teamService.removeMemberFromTeam(teamId, userId, requesterId);
-            return ResponseEntity.ok(Map.of("message", "Member removed successfully"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
-    }
-
     @Operation(summary = "Invite a user to a team", description = "Invite a user to a team by their email")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User invited successfully"),
@@ -155,23 +129,29 @@ public class TeamController {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "User not authenticated"));
         }
-
+    
         String email = requestBody.get("email");
         if (email == null || email.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
         }
-
+    
         try {
             String currentUserEmail = principal.getName();
             User currentUser = userService.getUserByEmail(currentUserEmail);
-
+    
             Team team = teamService.getTeamById(teamId).orElseThrow(() -> new RuntimeException("Team not found"));
-
-            // Prevent inviting existing members or already invited users
-            if (team.getMemberIds().contains(currentUser.getId()) || team.getInvitations().contains(email)) {
-                return ResponseEntity.badRequest().body(Map.of("message", "User is already a member or has been invited"));
+    
+            // Check if user is already a member
+            Optional<User> invitedUser = userRepository.findByEmail(email);
+            if (invitedUser.isPresent() && team.getMemberIds().contains(invitedUser.get().getId())) {
+                return ResponseEntity.badRequest().body(Map.of("message", "User is already a member"));
             }
-
+    
+            // Check if user has already been invited
+            if (team.getInvitations().contains(email)) {
+                return ResponseEntity.badRequest().body(Map.of("message", "User has already been invited"));
+            }
+    
             teamService.inviteUserToTeam(teamId, email);
             return ResponseEntity.ok(Map.of("message", "User invited successfully"));
         } catch (RuntimeException e) {
@@ -179,31 +159,6 @@ public class TeamController {
         }
     }
 
-    @Operation(summary = "Send a message to a team", description = "Send a message to a team chat")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Message sent successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
-    })
-    @PostMapping("/{teamId}/send-message")
-    public ResponseEntity<?> sendMessageToTeam(@PathVariable String teamId, @RequestParam String senderId,
-                                               @RequestParam String message, @RequestParam(required = false) String fileUrl) {
-        if (teamId == null || teamId.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Team ID is required"));
-        }
-        if (senderId == null || senderId.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Sender ID is required"));
-        }
-        if (message == null || message.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Message content is required"));
-        }
-
-        try {
-            teamService.sendMessageToTeam(teamId, senderId, message, fileUrl);
-            return ResponseEntity.ok(Map.of("message", "Message sent successfully"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
-    }
 
     @Operation(summary = "Send a join request to a team", description = "Send a join request to a team")
     @ApiResponses({
@@ -339,5 +294,60 @@ public ResponseEntity<?> listTeamMembers(@PathVariable String id) {
         }
 
         return ResponseEntity.ok(team.get().getChatMessages());
+    }
+    // Get pending invitations for current user
+    @Operation(summary = "Get user's team invitations", description = "Get all pending team invitations for the current user")
+    @GetMapping("/invitations")
+    public ResponseEntity<?> getUserInvitations(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        try {
+            User user = userService.getUserByEmail(principal.getName());
+            List<Team> teams = teamService.getTeamsWithInvitationsForUser(user.getEmail());
+
+            return ResponseEntity.ok(teams.stream()
+                    .map(team -> Map.of(
+                            "teamId", team.getId(),
+                            "teamName", team.getName(),
+                            "ownerEmail", userRepository.findById(team.getOwnerId())
+                                    .map(User::getEmail)
+                                    .orElse("Unknown")
+                    ))
+                    .collect(Collectors.toList()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // Accept a team invitation
+    @Operation(summary = "Accept team invitation", description = "Accept a team invitation")
+    @PostMapping("/{teamId}/invitations/accept")
+    public ResponseEntity<?> acceptInvitation(
+            @PathVariable String teamId,
+            Principal principal) {
+        try {
+            User user = userService.getUserByEmail(principal.getName());
+            teamService.acceptInvitation(teamId, user.getId(), user.getEmail());
+            return ResponseEntity.ok(Map.of("message", "Invitation accepted"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // Reject a team invitation
+    @Operation(summary = "Reject team invitation", description = "Reject a team invitation")
+    @PostMapping("/{teamId}/invitations/reject")
+    public ResponseEntity<?> rejectInvitation(
+            @PathVariable String teamId,
+            Principal principal) {
+        try {
+            User user = userService.getUserByEmail(principal.getName());
+            teamService.rejectInvitation(teamId, user.getEmail());
+            return ResponseEntity.ok(Map.of("message", "Invitation rejected"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 }
