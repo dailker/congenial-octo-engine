@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::section})}">
+<head>
+    <title>Edit Team</title>
+</head>
+<body>
+<section>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Edit Team</h2>
+                        <a th:href="@{/teams}" class="btn btn-outline-secondary">
+                            Back to Teams
+                        </a>
+                    </div>
+                    
+                    <form id="teamForm" th:object="${team}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Team Name</label>
+                            <input type="text" class="form-control" id="name" name="name" th:field="*{name}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" th:field="*{description}"></textarea>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                Update Team
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script th:inline="javascript">
+    document.getElementById('teamForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const teamId = /*[[${team.id}]]*/ '';
+        const formData = {
+            name: document.getElementById('name').value,
+            description: document.getElementById('description').value,
+        };
+        
+        fetch(`/api/teams/${teamId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/teams';
+            } else {
+                throw new Error('Failed to update team');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to update team. Please try again.');
+        });
+    });
+    </script>
+</section>
+</body>
+</html>

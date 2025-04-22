@@ -316,10 +316,6 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public List<User> getOnlineUsers() {
-        return userRepository.findByOnline(true);
-    }
-
     public void sendMessage(String senderId, String recipientId, String message) {
         if (message == null || message.trim().isEmpty()) {
             throw new RuntimeException("Message content cannot be empty");

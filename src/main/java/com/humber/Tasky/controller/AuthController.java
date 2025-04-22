@@ -4,9 +4,6 @@ import com.humber.Tasky.model.User;
 import com.humber.Tasky.service.AuthService;
 import com.humber.Tasky.service.UserService;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -18,16 +15,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@Tag(name = "Authentication", description = "Authentication API")
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;
-    @SuppressWarnings("unused")
     private final UserService userService;
-    @SuppressWarnings("unused")
     private final AuthenticationManager authenticationManager;
-    @SuppressWarnings("unused")
     private final SecurityContextRepository securityContextRepository;
 
     public AuthController(AuthService authService, UserService userService,
@@ -39,11 +32,6 @@ public class AuthController {
         this.securityContextRepository = securityContextRepository;
     }
 
-    @Operation(summary = "Register a new user", description = "Register a new user with the provided details")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Registration successful"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input")
-    })
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         try {
@@ -54,11 +42,6 @@ public class AuthController {
         }
     }
 
-    @Operation(summary = "Login a user", description = "Authenticate a user with email and password")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Login successful"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid credentials")
-    })
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest,
                                        HttpServletRequest request,

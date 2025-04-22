@@ -1,4 +1,4 @@
-package com.humber.Tasky.config;
+package com.humber.tasky.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -11,15 +11,13 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
-    public void configureMessageBroker(@SuppressWarnings("null") MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic", "/queue"); // Add "/queue" for private messages if needed
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic");
         config.setApplicationDestinationPrefixes("/app");
     }
 
     @Override
-    public void registerStompEndpoints(@SuppressWarnings("null") StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*") // Ensure CORS is configured correctly
-                .withSockJS(); // Enable SockJS fallback
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws").setAllowedOrigins("*").withSockJS();
     }
 }

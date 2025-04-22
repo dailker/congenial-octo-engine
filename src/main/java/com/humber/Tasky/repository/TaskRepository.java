@@ -14,5 +14,4 @@ public interface TaskRepository extends MongoRepository<Task, String> {
     List<Task> findByOwnerAndDueDateBetween(User owner, LocalDateTime start, LocalDateTime end);
     List<Task> findByOwnerAndCompleted(User owner, boolean completed);
     List<Task> findByInvitedUsersContaining(String userId);
-    List<Task> findByInvitationsUserIdAndInvitationsStatus(String userId, Task.InvitationStatus status);
 }

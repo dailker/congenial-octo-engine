@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
-    <title th:text="${title ?: 'Tasky'}">Tasky</title>
+    <title th:text="${#strings.isEmpty(title) ? 'Tasky' : title + ' - Tasky'}">Tasky</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css" rel="stylesheet">
     <style>
@@ -181,9 +181,6 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 90%;
-            max-height: 90%;
-            overflow: auto;
         }
     </style>
 </head>
@@ -208,92 +205,38 @@
                     <a class="nav-link" href="/profile">
                         <i class="mdi mdi-account-circle-outline me-1"></i> Profile
                     </a>
-                    <a class="nav-link" href="/teams">
-                        <i class="mdi mdi-account-group-outline me-1"></i> Teams
-                    </a>
                 </div>
                 <div class="navbar-nav">
                     <div sec:authorize="isAuthenticated()">
                         <!-- Combined Requests Dropdown -->
                         <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle position-relative" type="button"
-                                id="requestsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" id="requestsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 Requests
-                                <span id="requestsBadge"
-                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                                    style="display: none;">
-                                    0
-                                </span>
                             </button>
-                            <div class="dropdown-menu p-3" aria-labelledby="requestsDropdown" style="width: 400px;">
-                                <!-- Friend Requests Section -->
-                                <div>
+                            <ul class="dropdown-menu" aria-labelledby="requestsDropdown">
+                                <li th:if="${receivedWithSenders != null and !receivedWithSenders.isEmpty()}">
                                     <h6 class="dropdown-header">Friend Requests</h6>
-                                    <div th:if="${receivedWithSenders != null and !receivedWithSenders.isEmpty()}">
-                                        <div th:each="request : ${receivedWithSenders}"
-                                            class="d-flex align-items-center mb-2">
-                                            <img th:src="${request.user.avatarUrl}" alt="Avatar"
-                                                class="request-avatar me-2">
-                                            <span class="request-user-info" th:text="${request.user.fullName}"></span>
-                                            <div class="request-actions">
-
-                                                <button class="btn btn-success btn-sm"
-                                                    th:data-request-id="${request.request.id}"
-                                                    onclick="acceptRequest(this.getAttribute('data-request-id'))">
-                                                    Accept
-                                                </button>
-
-                                                <button class="btn btn-danger btn-sm"
-                                                    th:data-request-id="${request.request.id}"
-                                                    onclick="rejectRequest(this.getAttribute('data-request-id'))">
-                                                    Reject
-                                                </button>
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div th:if="${receivedWithSenders == null or receivedWithSenders.isEmpty()}"
-                                        class="text-muted">
-                                        No friend requests.
-                                    </div>
-                                </div>
-
-                                <!-- Task Invitations Section -->
-                                <div class="mt-3">
+                                    <li th:each="request : ${receivedWithSenders}">
+                                        <a class="dropdown-item" th:text="${request.sender.fullName}"></a>
+                                    </li>
+                                </li>
+                                <li th:if="${taskInvitations != null and !taskInvitations.isEmpty()}">
                                     <h6 class="dropdown-header">Task Invitations</h6>
-                                    <div th:if="${taskInvitations != null and !taskInvitations.isEmpty()}">
-                                        <div th:each="task : ${taskInvitations}" class="d-flex align-items-center mb-2">
-                                            <span class="me-2" th:text="${task.title}"></span>
-                                            <div class="request-actions">
-                                                <button class="btn btn-success btn-sm" th:data-task-id="${task.id}"
-                                                    onclick="acceptTaskInvitation(this.getAttribute('data-task-id'))">
-                                                    Accept
-                                                </button>
-                                                <button class="btn btn-danger btn-sm" th:data-task-id="${task.id}"
-                                                    onclick="rejectTaskInvitation(this.getAttribute('data-task-id'))">
-                                                    Reject
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div th:if="${taskInvitations == null or taskInvitations.isEmpty()}"
-                                        class="text-muted">
-                                        No task invitations.
-                                    </div>
-                                </div>
-                            </div>
+                                    <li th:each="task : ${taskInvitations}">
+                                        <a class="dropdown-item" th:text="${task.title}"></a>
+                                    </li>
+                                </li>
+                            </ul>
                         </div>
 
                         <!-- Add Online Friends Dropdown -->
-                        <!-- Add Online Friends Dropdown -->
                         <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle" type="button" id="onlineFriendsDropdown"
-                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" id="onlineFriendsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 Online Friends
                             </button>
-                            <ul class="dropdown-menu" aria-labelledby="onlineFriendsDropdown" id="onlineFriendsList">
-                                <li class="text-muted text-center" id="noOnlineFriendsMessage">
-                                    Loading online friends...
+                            <ul class="dropdown-menu" aria-labelledby="onlineFriendsDropdown">
+                                <li th:each="friend : ${onlineFriends}">
+                                    <a class="dropdown-item" th:text="${friend.fullName}" th:onclick="'openChat(\'' + ${friend.id} + '\')'"></a>
                                 </li>
                             </ul>
                         </div>
@@ -322,7 +265,7 @@
     </nav>
 
     <div class="container mt-4">
-        <div th:replace="${content ?: 'fragments/default-content'}"></div>
+        <div th:replace="${content}"></div>
     </div>
 
     <!-- Add Chat Box -->
@@ -342,6 +285,32 @@
         </div>
     </div>
 
+    <!-- Messenger Section -->
+    <div id="messenger">
+        <h3>Messenger</h3>
+        <div id="messages"></div>
+        <input type="text" id="message-input" placeholder="Type a message..." />
+        <button id="send-message">Send</button>
+    </div>
+
+    <!-- Voice Call Section -->
+    <div id="voice-call">
+        <button id="start-call">Start Voice Call</button>
+        <button id="end-call" style="display: none;">End Call</button>
+    </div>
+
+    <!-- Team Request Popup -->
+    <div id="team-request" class="clickable-div">
+        <p>Request to Join a Team</p>
+    </div>
+
+    <div id="team-popup" class="popup">
+        <form id="team-request-form">
+            <label for="team-name">Team Name:</label>
+            <input type="text" id="team-name" name="teamName" required>
+            <button type="submit">Request</button>
+        </form>
+    </div>
 
     <footer class="mt-5 py-3 text-center text-muted">
         <div class="container">
@@ -364,149 +333,47 @@
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-bs-theme', savedTheme);
-
-            const friendRequests = document.querySelectorAll('.request-avatar'); // Each avatar = 1 friend request
-            const taskInvitations = document.querySelectorAll('[th\\:each="task : ${taskInvitations}"]'); // fallback if Thymeleaf removes th:each
-
-            // Fallback if Thymeleaf strips the th:each attributes
-            const taskInvs = Array.from(document.querySelectorAll('.dropdown-menu')).flatMap(menu =>
-                Array.from(menu.querySelectorAll('.request-actions')).filter(action =>
-                    action.querySelector('[onclick*="acceptTaskInvitation"]'))
-            );
-
-            const total = friendRequests.length + taskInvs.length;
-
-            const badge = document.getElementById('requestsBadge');
-            if (total > 0) {
-                badge.innerText = total;
-                badge.style.display = 'inline';
-            }
-
         });
 
-        // Function to fetch and display online friends
-        function fetchOnlineFriends() {
-            fetch('/api/users/onlineUsers', {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    const onlineFriendsList = document.getElementById('onlineFriendsList');
-                    const noOnlineFriendsMessage = document.getElementById('noOnlineFriendsMessage');
-
-                    // Clear existing items
-                    onlineFriendsList.innerHTML = '';
-
-                    // Filter out current user and keep only online friends
-                    const filteredFriends = data.filter(friend =>
-                        friend.online === true && friend.currentUser === false
-                    );
-
-                    if (filteredFriends.length === 0) {
-                        noOnlineFriendsMessage.textContent = 'No online friends';
-                        onlineFriendsList.appendChild(noOnlineFriendsMessage);
-                        return;
-                    }
-
-                    // Add each online friend to the list
-                    filteredFriends.forEach(friend => {
-                        const listItem = document.createElement('li');
-                        const link = document.createElement('a');
-                        link.className = 'dropdown-item d-flex align-items-center';
-                        link.href = '#';
-                        link.onclick = () => openChat(friend.id);
-
-                        // Add avatar if available
-                        if (friend.avatarUrl) {
-                            const avatar = document.createElement('img');
-                            avatar.src = friend.avatarUrl;
-                            avatar.alt = friend.fullName;
-                            avatar.className = 'rounded-circle me-2';
-                            avatar.style.width = '30px';
-                            avatar.style.height = '30px';
-                            avatar.style.objectFit = 'cover';
-                            link.appendChild(avatar);
-                        }else{
-                            const avatar = document.createElement('img');
-                            avatar.src = "https://cdn-icons-png.flaticon.com/512/1177/1177568.png"
-                            avatar.alt = friend.fullName;
-                            avatar.className = 'rounded-circle me-2';
-                            avatar.style.width = '30px';
-                            avatar.style.height = '30px';
-                            avatar.style.objectFit = 'cover';
-                            link.appendChild(avatar);
-                        }
-
-                        // Add friend name
-                        const nameSpan = document.createElement('span');
-                        nameSpan.textContent = friend.fullName;
-                        link.appendChild(nameSpan);
-
-                        // Add online indicator
-                        const onlineBadge = document.createElement('span');
-                        onlineBadge.className = 'ms-auto badge bg-success rounded-pill';
-                        onlineBadge.textContent = 'Online';
-                        link.appendChild(onlineBadge);
-
-                        listItem.appendChild(link);
-                        onlineFriendsList.appendChild(listItem);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching online friends:', error);
-                    const noOnlineFriendsMessage = document.getElementById('noOnlineFriendsMessage');
-                    noOnlineFriendsMessage.textContent = 'Error loading online friends';
-                });
-        }
-
-        // Call the function when the page loads
-        document.addEventListener('DOMContentLoaded', fetchOnlineFriends);
-
-        // Refresh online friends periodically
-        setInterval(fetchOnlineFriends, 30000); // Refresh every 30 seconds
-
         function acceptRequest(requestId) {
-            fetch(`/api/users/friends/accept/${requestId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
-                }
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => { throw new Error(err.message || 'Failed to accept request'); });
-                    }
-                    location.reload();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert(error.message);
-                });
+    fetch(`/api/users/friends/accept/${requestId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
         }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.message || 'Failed to accept request'); });
+        }
+        location.reload();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message);
+    });
+}
 
-        function rejectRequest(requestId) {
-            fetch(`/api/users/friends/reject/${requestId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
-                }
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => { throw new Error(err.message || 'Failed to reject request'); });
-                    }
-                    location.reload();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert(error.message);
-                });
+function rejectRequest(requestId) {
+    fetch(`/api/users/friends/reject/${requestId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
         }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.message || 'Failed to reject request'); });
+        }
+        location.reload();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message);
+    });
+}
 
         function acceptTaskInvitation(taskId) {
             fetch(`/api/tasks/${taskId}/accept`, { method: 'POST' })
@@ -558,6 +425,29 @@
                 }
             }).catch(err => console.error('Ping failed:', err));
         }, 30000); // Ping every 30 seconds
+
+        // Team request popup functionality
+        document.getElementById('team-request').addEventListener('click', function () {
+            document.getElementById('team-popup').style.display = 'block';
+        });
+
+        document.getElementById('team-request-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const teamName = document.getElementById('team-name').value;
+            // Send request to the server
+            fetch('/api/teams', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: teamName })
+            }).then(response => {
+                if (response.ok) {
+                    alert('Request sent successfully!');
+                    document.getElementById('team-popup').style.display = 'none';
+                } else {
+                    alert('Failed to send request.');
+                }
+            });
+        });
 
         // Messenger functionality
         const socket = new WebSocket('ws://localhost:8080/ws');

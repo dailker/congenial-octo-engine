@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::main})}">
+<head>
+    <title>Edit Profile</title>
+</head>
+<body>
+<main>
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <!-- Add flash message display at the top -->
+            <div th:if="${success}" class="alert alert-success" role="alert">
+                <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger" role="alert">
+                <span th:text="${error}"></span>
+            </div>
+            
+            <div class="card">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">Edit Profile</h2>
+                    
+                    <form th:action="@{/edit-profile}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        
+                        <div class="text-center mb-4">
+                            <img th:src="${(user.avatarUrl != null and !user.avatarUrl.isEmpty()) ? 
+                                user.avatarUrl : 
+                                'https://www.pphfoundation.ca/wp-content/uploads/2018/05/default-avatar.png'}" 
+                                 class="rounded-circle mb-2" width="150" height="150" alt="Profile picture" id="avatarPreview">
+                            <div class="d-flex justify-content-center">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                        onclick="document.getElementById('avatarUrl').value = ''; updateAvatarPreview()">
+                                    <i class="mdi mdi-delete me-1"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="avatarUrl" class="form-label">Avatar URL</label>
+                            <input type="url" class="form-control" id="avatarUrl" name="avatarUrl" 
+                                   th:value="${user.avatarUrl}" placeholder="https://example.com/avatar.jpg"
+                                   oninput="updateAvatarPreview()">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="fullName" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="fullName" name="fullName" 
+                                   th:value="${user.fullName}" required>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="mdi mdi-content-save me-1"></i> Save Changes
+                            </button>
+                            <a th:href="@{/profile}" class="btn btn-outline-secondary">
+                                <i class="mdi mdi-close me-1"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function updateAvatarPreview() {
+            const avatarUrl = document.getElementById('avatarUrl').value;
+            const preview = document.getElementById('avatarPreview');
+            preview.src = avatarUrl || 'https://www.pphfoundation.ca/wp-content/uploads/2018/05/default-avatar.png';
+        }
+        
+        // Initialize preview on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAvatarPreview();
+        });
+    </script>
+</main>
+</body>
+</html>

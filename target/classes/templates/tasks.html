@@ -2,11 +2,6 @@
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::section})}">
 <head>
     <title>Tasks</title>
-    <style>
-        .accepted-task {
-            background-color: #ffa500; /* Orange background for accepted tasks */
-        }
-    </style>
 </head>
 <body>
 <section>
@@ -17,336 +12,85 @@
         </a>
     </div>
 
-    <div id="taskInvitationsSection">
+    <div th:if="${taskInvitations != null and !taskInvitations.isEmpty()}">
         <h3>Task Invitations</h3>
-        <ul id="taskInvitationsList"></ul>
+        <ul>
+            <li th:each="task : ${taskInvitations}">
+                <span th:text="${task.title}"></span>
+                <button class="btn btn-success btn-sm" th:onclick="'acceptTaskInvitation(\'' + ${task.id} + '\')'">Accept</button>
+                <button class="btn btn-danger btn-sm" th:onclick="'rejectTaskInvitation(\'' + ${task.id} + '\')'">Reject</button>
+            </li>
+        </ul>
     </div>
 
-    <script th:inline="javascript">
-        document.addEventListener('DOMContentLoaded', async function () {
-            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-
-            try {
-                const response = await fetch('/api/tasks/invitations', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    }
-                });
-
-                if (response.ok) {
-                    const taskInvitations = await response.json();
-                    const invitationsList = document.getElementById('taskInvitationsList');
-                    invitationsList.innerHTML = taskInvitations.map(invitation => `
-                        <li>
-                            <strong>${invitation.title}</strong> - ${invitation.description || 'No description'}
-                            <button onclick="acceptInvitation('${invitation.id}')">Accept</button>
-                            <button onclick="rejectInvitation('${invitation.id}')">Reject</button>
-                        </li>
-                    `).join('');
-                } else {
-                    console.error('Failed to fetch task invitations');
-                }
-            } catch (error) {
-                console.error('Error fetching task invitations:', error);
-            }
-        });
-
-        async function acceptInvitation(taskId) {
-            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-            try {
-                const response = await fetch(`/api/tasks/${taskId}/accept`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    }
-                });
-
-                if (response.ok) {
-                    alert('Task invitation accepted successfully!');
-                    location.reload();
-                } else {
-                    const error = await response.json();
-                    alert('Failed to accept task invitation: ' + error.message);
-                }
-            } catch (error) {
-                console.error('Error accepting task invitation:', error);
-                alert('Network error - please try again');
-            }
-        }
-
-        async function rejectInvitation(taskId) {
-            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-            try {
-                const response = await fetch(`/api/tasks/${taskId}/reject`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    }
-                });
-
-                if (response.ok) {
-                    alert('Task invitation rejected successfully!');
-                    location.reload();
-                } else {
-                    const error = await response.json();
-                    alert('Failed to reject task invitation: ' + error.message);
-                }
-            } catch (error) {
-                console.error('Error rejecting task invitation:', error);
-                alert('Network error - please try again');
-            }
-        }
-    </script>
-
-    <div th:if="${acceptedTasks != null and !acceptedTasks.isEmpty()}" id="acceptedTasksSection">
-        <h3>Accepted Tasks</h3>
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Title</th>
-                                        <th>Description</th>
-                                        <th>Due Date</th>
-                                        <th>Priority</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="task : ${acceptedTasks}">
-                                        <td th:text="${task.title}"></td>
-                                        <td th:text="${task.description}"></td>
-                                        <td th:text="${#temporals.format(task.dueDate, 'yyyy-MM-dd HH:mm')}"></td>
-                                        <td>
-                                            <span th:class="${'badge ' + 
-                                                (task.priority == 'HIGH' ? 'text-bg-danger' : 
-                                                (task.priority == 'MEDIUM' ? 'text-bg-warning' : 'text-bg-success'))}"
-                                                th:text="${task.priority}">
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span th:class="${'badge ' + (task.completed ? 'text-bg-success' : 'text-bg-secondary')}"
-                                                th:text="${task.completed ? 'Completed' : 'Pending'}">
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-warning" 
-                                                    th:data-task-id="${task.id}" 
-                                                    onclick="leaveAcceptedTask(this)">
-                                                <i class="mdi mdi-exit-to-app"></i> Leave Task
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Description</th>
+                                    <th>Due Date</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="task : ${tasks}">
+                                    <td th:text="${task.title}"></td>
+                                    <td th:text="${task.description}"></td>
+                                    <td th:text="${#temporals.format(task.dueDate, 'yyyy-MM-dd HH:mm')}"></td>
+                                    <td>
+                                        <span th:class="${'badge ' + 
+                                            (task.priority == 'HIGH' ? 'text-bg-danger' : 
+                                            (task.priority == 'MEDIUM' ? 'text-bg-warning' : 'text-bg-success'))}"
+                                            th:text="${task.priority}">
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span th:class="${'badge ' + (task.completed ? 'text-bg-success' : 'text-bg-secondary')}"
+                                            th:text="${task.completed ? 'Completed' : 'Pending'}">
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary toggle-task" 
+                                                th:data-task-id="${task.id}">
+                                                <i class="mdi" th:classappend="${task.completed ? 'mdi-undo' : 'mdi-check'}"></i>
                                             </button>
-                                        </td>
-                                    </tr>
-                                    <tr th:if="${#lists.isEmpty(acceptedTasks)}">
-                                        <td colspan="6" class="text-center">No accepted tasks found</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                                            <a th:href="@{'/tasks/edit/' + ${task.id}}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-danger delete-task" 
+                                                th:data-task-id="${task.id}">
+                                                <i class="mdi mdi-delete"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-primary invite-user" th:data-task-id="${task.id}">
+                                                <i class="mdi mdi-account-plus"></i> Invite User
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(tasks)}">
+                                    <td colspan="6" class="text-center">No tasks found</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div th:if="${editableTasks != null and !editableTasks.isEmpty()}">
-        <h3>Editable Tasks</h3>
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Title</th>
-                                        <th>Description</th>
-                                        <th>Due Date</th>
-                                        <th>Priority</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="task : ${editableTasks}">
-                                        <td th:text="${task.title}"></td>
-                                        <td th:text="${task.description}"></td>
-                                        <td th:text="${#temporals.format(task.dueDate, 'yyyy-MM-dd HH:mm')}"></td>
-                                        <td>
-                                            <span th:class="${'badge ' + 
-                                                (task.priority == 'HIGH' ? 'text-bg-danger' : 
-                                                (task.priority == 'MEDIUM' ? 'text-bg-warning' : 'text-bg-success'))}"
-                                                th:text="${task.priority}">
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span th:class="${'badge ' + (task.completed ? 'text-bg-success' : 'text-bg-secondary')}"
-                                                th:text="${task.completed ? 'Completed' : 'Pending'}">
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <a th:href="@{'/tasks/edit/' + ${task.id}}" class="btn btn-sm btn-outline-secondary">
-                                                    <i class="mdi mdi-pencil"></i> Edit
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr th:if="${#lists.isEmpty(editableTasks)}">
-                                        <td colspan="6" class="text-center">No editable tasks found</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div th:if="${tasks != null and !tasks.isEmpty()}" id="allTasksSection">
-        <h3>All Tasks</h3>
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Title</th>
-                                        <th>Description</th>
-                                        <th>Due Date</th>
-                                        <th>Priority</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="task : ${tasks}">
-                                        <td th:text="${task.title}"></td>
-                                        <td th:text="${task.description}"></td>
-                                        <td th:text="${#temporals.format(task.dueDate, 'yyyy-MM-dd HH:mm')}"></td>
-                                        <td>
-                                            <span th:class="${'badge ' + 
-                                                (task.priority == 'HIGH' ? 'text-bg-danger' : 
-                                                (task.priority == 'MEDIUM' ? 'text-bg-warning' : 'text-bg-success'))}"
-                                                th:text="${task.priority}">
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span th:class="${'badge ' + (task.completed ? 'text-bg-success' : 'text-bg-secondary')}"
-                                                th:text="${task.completed ? 'Completed' : 'Pending'}">
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <button class="btn btn-sm btn-outline-primary toggle-task" 
-                                                    th:data-task-id="${task.id}">
-                                                    <i class="mdi" th:classappend="${task.completed ? 'mdi-undo' : 'mdi-check'}"></i>
-                                                </button>
-                                                <a th:href="@{'/tasks/edit/' + ${task.id}}" class="btn btn-sm btn-outline-secondary">
-                                                    <i class="mdi mdi-pencil"></i>
-                                                </a>
-                                                <button class="btn btn-sm btn-outline-danger delete-task" 
-                                                    th:data-task-id="${task.id}" 
-                                                    th:disabled="${task.owner.email != #authentication.name}">
-                                                    <i class="mdi mdi-delete"></i> Delete Task
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-primary invite-user" 
-                                                    th:data-task-id="${task.id}" 
-                                                    th:disabled="${task.owner.email != #authentication.name}" 
-                                                    onclick="showInvitePopup(this)">
-                                                    <i class="mdi mdi-account-plus"></i> Invite User
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-warning"
-                                                        th:data-task-id="${task.id}"
-                                                        th:if="${task.owner.email != #authentication.name}"
-                                                        onclick="leaveTask(this)">
-                                                    <i class="mdi mdi-exit-to-app"></i> Leave Task
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr th:if="${#lists.isEmpty(tasks)}">
-                                        <td colspan="6" class="text-center">No tasks found</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Invite User Popup -->
-    <div id="inviteUserPopup" class="popup" style="display: none;">
-        <h5>Invite User to Task</h5>
-        <form id="inviteUserForm">
-            <input type="hidden" id="inviteTaskId">
-            <label for="inviteEmail">User Email:</label>
-            <input type="email" id="inviteEmail" class="form-control" required>
-            <button type="submit" class="btn btn-primary mt-2">Send Invitation</button>
-            <button type="button" class="btn btn-secondary mt-2" onclick="closeInvitePopup()">Cancel</button>
-        </form>
-    </div>
-
     <script th:inline="javascript">
-        document.addEventListener('DOMContentLoaded', async function () {
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get CSRF token from meta tag (make sure your layout includes this)
             const csrfToken = document.querySelector('meta[name="_csrf"]').content;
             const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
-
-            // Fetch accepted tasks via REST API
-            try {
-                const response = await fetch('/api/tasks/accepted', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    }
-                });
-
-                if (response.ok) {
-                    const acceptedTasks = await response.json();
-                    const acceptedTasksTable = document.getElementById('acceptedTasksTable');
-
-                    acceptedTasks.forEach(task => {
-                        const row = document.createElement('tr');
-                        row.classList.add('accepted-task'); // Add orange background class
-                        row.innerHTML = `
-                            <td>${task.title}</td>
-                            <td>${task.description}</td>
-                            <td>${new Date(task.dueDate).toLocaleString()}</td>
-                            <td>
-                                <span class="badge ${
-                                    task.priority === 'HIGH' ? 'text-bg-danger' :
-                                    task.priority === 'MEDIUM' ? 'text-bg-warning' : 'text-bg-success'
-                                }">${task.priority}</span>
-                            </td>
-                            <td>
-                                <span class="badge ${
-                                    task.completed ? 'text-bg-success' : 'text-bg-secondary'
-                                }">${task.completed ? 'Completed' : 'Pending'}</span>
-                            </td>
-                        `;
-                        acceptedTasksTable.appendChild(row);
-                    });
-                } else {
-                    console.error('Failed to fetch accepted tasks');
-                }
-            } catch (error) {
-                console.error('Error fetching accepted tasks:', error);
-            }
-
+    
             // Toggle task completion status
             document.querySelectorAll('.toggle-task').forEach(button => {
                 button.addEventListener('click', async function() {
@@ -406,167 +150,28 @@
                     }
                 });
             });
-
-            // Accept task invitation
-            document.querySelectorAll('.accept-task').forEach(button => {
-                button.addEventListener('click', async function () {
-                    const taskId = this.getAttribute('data-task-id');
-                    try {
-                        const response = await fetch(`/api/tasks/${taskId}/accept`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken
-                            }
-                        });
-
-                        if (response.ok) {
-                            const result = await response.json();
-                            alert(result.message || 'Task invitation accepted successfully');
-                            if (result.redirectUrl) {
-                                window.location.href = result.redirectUrl; // Redirect to the provided URL
-                            } else {
-                                location.reload();
-                            }
-                        } else {
-                            const error = await response.json();
-                            alert(error.message || 'Failed to accept task invitation');
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        alert('Network error - please try again');
-                    }
-                });
-            });
-
-            // Reject task invitation
-            document.querySelectorAll('.reject-task').forEach(button => {
-                button.addEventListener('click', function () {
-                    const taskId = this.getAttribute('data-task-id');
-                    fetch(`/api/tasks/${taskId}/reject`, { method: 'POST' })
-                        .then(response => {
-                            if (response.ok) {
-                                location.reload();
-                            } else {
-                                alert('Failed to reject task invitation.');
-                            }
-                        });
-                });
-            });
-
-            // Delete Task
-            window.deleteTask = async function (button) {
-                const taskId = button.getAttribute('data-task-id');
-                if (confirm('Are you sure you want to delete this task?')) {
-                    try {
-                        const response = await fetch(`/api/tasks/${taskId}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': csrfToken
-                            }
-                        });
-                        if (response.ok) {
-                            location.reload();
-                        } else {
-                            const error = await response.json();
-                            alert('Failed to delete task: ' + error.message);
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        alert('Network error - please try again');
-                    }
-                }
-            };
-
-            // Leave Task
-            window.leaveTask = async function (button) {
-                const taskId = button.getAttribute('data-task-id');
-                if (confirm('Are you sure you want to leave this task?')) {
-                    try {
-                        const response = await fetch(`/api/tasks/${taskId}/leave`, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': csrfToken
-                            }
-                        });
-                        if (response.ok) {
-                            location.reload();
-                        } else {
-                            const error = await response.json();
-                            alert('Failed to leave task: ' + error.message);
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        alert('Network error - please try again');
-                    }
-                }
-            };
         });
 
-        function showInvitePopup(button) {
-            const taskId = button.getAttribute('data-task-id');
-            document.getElementById('inviteTaskId').value = taskId;
-            document.getElementById('inviteUserPopup').style.display = 'block';
-        }
-
-        function closeInvitePopup() {
-            document.getElementById('inviteUserPopup').style.display = 'none';
-        }
-
-        document.getElementById('inviteUserForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const taskId = document.getElementById('inviteTaskId').value;
-            const email = document.getElementById('inviteEmail').value;
-
-            try {
-                const response = await fetch(`/api/tasks/${taskId}/invite`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
-                    },
-                    body: JSON.stringify({ email })
-                });
-
-                if (response.ok) {
-                    alert('Invitation sent successfully!');
-                    closeInvitePopup();
-                } else {
-                    const error = await response.json();
-                    alert('Failed to send invitation: ' + error.message);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Network error - please try again');
-            }
-        });
-
-        async function leaveAcceptedTask(button) {
-            const taskId = button.getAttribute('data-task-id');
-            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-
-            if (confirm('Are you sure you want to leave this task?')) {
-                try {
-                    const response = await fetch(`/api/tasks/${taskId}/leave-accepted`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken
-                        }
-                    });
-
+        function acceptTaskInvitation(taskId) {
+            fetch(`/api/tasks/${taskId}/accept`, { method: 'POST' })
+                .then(response => {
                     if (response.ok) {
-                        alert('Successfully left the task');
                         location.reload();
                     } else {
-                        const error = await response.json();
-                        alert('Failed to leave task: ' + error.message);
+                        alert('Failed to accept task invitation.');
                     }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Network error - please try again');
-                }
-            }
+                });
+        }
+
+        function rejectTaskInvitation(taskId) {
+            fetch(`/api/tasks/${taskId}/reject`, { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Failed to reject task invitation.');
+                    }
+                });
         }
     </script>
     

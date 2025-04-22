@@ -1,15 +1,21 @@
-#
-# Build stage
-#
-FROM eclipse-temurin:21-jdk as build
-RUN apt-get update && apt-get install -y maven
-COPY . .
-RUN mvn package -DskipTests
+# Use Maven with Java 21 to build the app
+FROM maven:3.9.5-eclipse-temurin-21 AS build
 
-#
-# Package stage
-#
-FROM eclipse-temurin:21-jdk-jammy
-COPY --from=build /target/demo-0.0.1-SNAPSHOT.jar demo.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "demo.jar"]
+WORKDIR /app
+
+# Copy pom and source code
+COPY pom.xml .
+COPY src ./src
+
+# Package the application
+RUN mvn clean package -DskipTests
+
+# Use OpenJDK 21 to run the app
+FROM eclipse-temurin:21-jdk
+
+WORKDIR /app
+
+COPY --from=build /app/target/*.jar app.jar
+
+# Run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]
