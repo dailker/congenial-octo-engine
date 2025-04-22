@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::section})}">
+<head>
+    <title>Edit Task</title>
+</head>
+<body>
+<section>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Edit Task</h2>
+                        <a th:href="@{/tasks}" class="btn btn-outline-secondary">
+                            Back to Tasks
+                        </a>
+                    </div>
+                    
+                    <form id="taskForm" th:object="${task}">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" th:field="*{title}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" th:field="*{description}"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="dueDate" class="form-label">Due Date</label>
+                                <input type="datetime-local" class="form-control" id="dueDate" name="dueDate" th:field="*{dueDate}" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="priority" class="form-label">Priority</label>
+                                <select class="form-select" id="priority" name="priority" th:field="*{priority}">
+                                    <option value="LOW">Low</option>
+                                    <option value="MEDIUM">Medium</option>
+                                    <option value="HIGH">High</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                Update Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script th:inline="javascript">
+    document.getElementById('taskForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const taskId = /*[[${task.id}]]*/ '';
+        const formData = {
+            title: document.getElementById('title').value,
+            description: document.getElementById('description').value,
+            dueDate: document.getElementById('dueDate').value,
+            priority: document.getElementById('priority').value
+        };
+        
+        fetch(`/api/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/tasks';
+            } else {
+                throw new Error('Failed to update task');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to update task. Please try again.');
+        });
+    });
+    </script>
+</section>
+</body>
+</html>
