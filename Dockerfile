@@ -8,7 +8,7 @@ COPY pom.xml .
 COPY src ./src
 
 # Package the application
-RUN mvn clean package -DskipTests
+RUN mvn package -DskipTests
 
 # Use OpenJDK 21 to run the app
 FROM eclipse-temurin:21-jdk
