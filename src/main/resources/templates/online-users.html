@@ -1,30 +1,89 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
-    <title>Online Users</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Friends</title>
+    <style>
+        .online-friends {
+            list-style-type: none;
+            padding: 0;
+        }
+        .online-friends li {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+        }
+        .online-friends .current-user {
+            font-weight: bold;
+            color: blue;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <h1>Online Users</h1>
-        <ul id="onlineUsersList" class="list-group">
-            <!-- Online users will be dynamically loaded here -->
-        </ul>
-    </div>
+
+    <h1>Online Friends</h1>
+    <ul id="online-users" class="online-friends"></ul>
 
     <script>
-        fetch('/api/users/onlineUsers')
-            .then(response => response.json())
-            .then(users => {
-                const list = document.getElementById('onlineUsersList');
-                users.forEach(user => {
-                    const listItem = document.createElement('li');
-                    listItem.className = 'list-group-item';
-                    listItem.textContent = user.fullName + ' (' + user.email + ')';
-                    list.appendChild(listItem);
+        // API URL for getting online users
+        const apiUrl = 'http://localhost:8080/api/users/onlineUsers';
+
+        // Function to fetch and display online users
+        async function getOnlineUsers() {
+            try {
+                // Fetch online users data from the API
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
                 });
-            })
-            .catch(error => console.error('Error fetching online users:', error));
+
+                // Check if response is ok (status 200)
+                if (!response.ok) {
+                    throw new Error('Failed to fetch online users');
+                }
+
+                // Parse the JSON response
+                const onlineUsers = await response.json();
+
+                // Get the list element to display users
+                const onlineUsersList = document.getElementById('online-users');
+                onlineUsersList.innerHTML = ''; // Clear any existing data
+
+                // Iterate over the list of online users
+                onlineUsers.forEach(user => {
+                    // Create a new list item for each user
+                    const listItem = document.createElement('li');
+
+                    // Check if the user is the current user and apply a special class
+                    if (user.currentUser) {
+                        listItem.classList.add('current-user');
+                        listItem.innerHTML = `
+                            <strong>${user.fullName} (You)</strong> - ${user.email}
+                        `;
+                    } else {
+                        listItem.innerHTML = `
+                            <strong>${user.fullName}</strong> - ${user.email}
+                        `;
+                    }
+
+                    // Append the list item to the list of online users
+                    onlineUsersList.appendChild(listItem);
+                });
+
+            } catch (error) {
+                // Handle any errors that occur during the fetch
+                console.error('Error fetching online users:', error);
+            }
+        }
+
+        // Call the function when the page loads to populate the list
+        window.onload = getOnlineUsers;
     </script>
+
 </body>
 </html>

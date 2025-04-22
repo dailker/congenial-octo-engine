@@ -298,28 +298,36 @@ public ResponseEntity<?> listTeamMembers(@PathVariable String id) {
     // Get pending invitations for current user
     @Operation(summary = "Get user's team invitations", description = "Get all pending team invitations for the current user")
     @GetMapping("/invitations")
-    public ResponseEntity<?> getUserInvitations(Principal principal) {
-        if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        try {
-            User user = userService.getUserByEmail(principal.getName());
-            List<Team> teams = teamService.getTeamsWithInvitationsForUser(user.getEmail());
-
-            return ResponseEntity.ok(teams.stream()
-                    .map(team -> Map.of(
-                            "teamId", team.getId(),
-                            "teamName", team.getName(),
-                            "ownerEmail", userRepository.findById(team.getOwnerId())
-                                    .map(User::getEmail)
-                                    .orElse("Unknown")
-                    ))
-                    .collect(Collectors.toList()));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
+public ResponseEntity<?> getUserInvitations(Principal principal) {
+    if (principal == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+
+    try {
+        String userEmail = principal.getName();
+        if (userEmail == null || userEmail.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "User email is missing"));
+        }
+
+        User user = userService.getUserByEmail(userEmail);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
+        }
+
+        List<Team> teams = teamService.getTeamsWithInvitationsForUser(user.getEmail());
+        if (teams == null || teams.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "No invitations found"));
+        }
+
+        return ResponseEntity.ok(teams.stream()
+                .map(team -> team
+                )
+                .collect(Collectors.toList()));
+
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    }
+}
 
     // Accept a team invitation
     @Operation(summary = "Accept team invitation", description = "Accept a team invitation")

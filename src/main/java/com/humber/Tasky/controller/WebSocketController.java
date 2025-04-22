@@ -163,4 +163,6 @@ public class WebSocketController {
         User user = userService.getUserById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         return teamService.getTeamsForUser(user.getId());
     }
+
+    
 }

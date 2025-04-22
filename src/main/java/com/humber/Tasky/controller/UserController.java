@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @Tag(name = "User", description = "User management APIs")
@@ -147,13 +148,35 @@ public class UserController {
     }
 
     @Operation(summary = "Get online friends", description = "Retrieve a list of online friends for the user")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Online friends retrieved successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated")
-    })
-    @GetMapping("/onlineUsers")
-    public ResponseEntity<List<User>> getOnlineUsers() {
-        List<User> onlineUsers = userService.getOnlineUsers();
-        return ResponseEntity.ok(onlineUsers);
+@ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Online friends retrieved successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated")
+})
+@GetMapping("/onlineUsers")
+public ResponseEntity<List<Map<String, Object>>> getOnlineUsers(Authentication authentication) {
+    if (authentication == null || !authentication.isAuthenticated()) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(List.of(Map.of("message", "User not authenticated")));
     }
+
+    String currentUserEmail = authentication.getName(); // Retrieve the authenticated user's email
+    User currentUser = userService.getUserByEmail(currentUserEmail); // Get the current user based on email
+
+    List<User> onlineUsers = userService.getOnlineUsers();
+    
+    // Prepare the response with the 'currentUser' flag
+    List<Map<String, Object>> onlineUsersWithCurrentFlag = onlineUsers.stream().map(user -> {
+        Map<String, Object> userMap = Map.of(
+            "id", user.getId(),
+            "fullName", user.getFullName(),
+            "avatarUrl", user.getAvatarUrl(),
+            "email", user.getEmail(),
+            "online", user.isOnline(),
+            "currentUser", user.getId().equals(currentUser.getId()) // Add currentUser flag
+        );
+        return userMap;
+    }).collect(Collectors.toList());
+
+    return ResponseEntity.ok(onlineUsersWithCurrentFlag);
+}
+
 }
