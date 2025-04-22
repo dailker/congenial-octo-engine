@@ -89,6 +89,7 @@ public class TeamController {
             // Add the creator as a member and set them as the owner
             team.getMemberIds().add(user.getId());
             team.getMemberPermissions().put(user.getId(), "Owner");
+            team.setOwnerId(user.getId());
 
             Team createdTeam = teamService.createTeam(team);
             return ResponseEntity.ok(createdTeam);
