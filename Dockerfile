@@ -4,7 +4,7 @@
 FROM eclipse-temurin:21-jdk as build
 RUN apt-get update && apt-get install -y maven
 COPY . .
-RUN mvn package -Pproduction -DskipTests
+RUN mvn package -DskipTests
 
 #
 # Package stage
