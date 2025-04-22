@@ -152,7 +152,6 @@ public class TeamService {
         }
         team.getMemberPermissions().put(currentOwnerId, "User");
         team.getMemberPermissions().put(newOwnerId, "Owner");
-        team.setOwnerId(newOwnerId);
         teamRepository.save(team);
     }
 
