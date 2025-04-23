@@ -121,6 +121,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
+                    <mainClass>com.humber.Tasky.TaskyApplication</mainClass>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
