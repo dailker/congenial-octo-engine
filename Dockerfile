@@ -30,4 +30,4 @@ COPY --from=build /app/target/Tasky-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 
 # Set the entrypoint
-ENTRYPOINT ["java", "-cp", "app.jar", "com.humber.Tasky.TaskyApplication"]
+ENTRYPOINT ["java", "-cp", "app.jar"]
