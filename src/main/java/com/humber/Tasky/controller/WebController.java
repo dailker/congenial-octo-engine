@@ -1,11 +1,9 @@
 package com.humber.Tasky.controller;
 
-import com.humber.Tasky.model.FriendRequest;
-import com.humber.Tasky.model.FriendRequestWithUser;
-import com.humber.Tasky.model.Task;
-import com.humber.Tasky.model.User;
+import com.humber.Tasky.model.*;
 import com.humber.Tasky.service.AuthService;
 import com.humber.Tasky.service.TaskService;
+import com.humber.Tasky.service.TeamService;
 import com.humber.Tasky.service.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,27 +16,39 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.Objects;
+
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
 @Controller
 public class WebController {
 
+    private static final Logger logger = LoggerFactory.getLogger(WebController.class);
+
     private final AuthService authService;
     private final TaskService taskService;
     private final UserService userService;
+    private final TeamService teamService;
 
     @Autowired
-    public WebController(AuthService authService, TaskService taskService, UserService userService) {
+    public WebController(AuthService authService, TaskService taskService, UserService userService, TeamService teamService) {
         this.taskService = taskService;
         this.authService = authService;
         this.userService = userService;
+        this.teamService = teamService;
     }
 
     @GetMapping("/")
-    public String home(@AuthenticationPrincipal User user, Model model) {
-        if (user != null) {
+    public String home(Principal principal, Model model) {
+        if (principal != null) {
+            User user = userService.getUserByEmail(principal.getName());
             List<Task> tasks = taskService.getAllTasks(user);
             model.addAttribute("tasks", tasks);
         }
@@ -52,8 +62,8 @@ public class WebController {
     }
 
     @GetMapping("/login")
-    public String showLoginPage(@AuthenticationPrincipal User user, Model model, CsrfToken csrfToken) {
-        if (user != null) {
+    public String showLoginPage(Principal principal, Model model, CsrfToken csrfToken) {
+        if (principal != null) {
             return "redirect:/tasks";
         }
         if (csrfToken != null) {
@@ -202,45 +212,114 @@ public String profile(Principal principal, Model model) {
     }
 
     @GetMapping("/tasks")
-    public String listTasks(@AuthenticationPrincipal User user, Model model) {
+    public String listTasks(Principal principal, Model model) {
+        if (principal == null) {
+            model.addAttribute("error", "User not authenticated");
+            return "tasks";
+        }
+
+        User user = userService.getUserByEmail(principal.getName());
         List<Task> tasks = taskService.getAllTasks(user);
+        List<Task> acceptedTasks = taskService.getAcceptedTasks(user.getId());
+        List<Task> editableTasks = taskService.getEditableTasks(user.getId());
+
         model.addAttribute("tasks", tasks);
+        model.addAttribute("acceptedTasks", acceptedTasks);
+        model.addAttribute("editableTasks", editableTasks);
         return "tasks";
     }
 
     @GetMapping("/online-friends")
     @ResponseBody
-    public List<User> getOnlineFriends(@AuthenticationPrincipal User user) {
-        if (user == null) {
+    public List<User> getOnlineFriends(Principal principal) {
+        if (principal == null) {
             throw new RuntimeException("User not authenticated");
         }
+        User user = userService.getUserByEmail(principal.getName());
         return userService.getOnlineFriends(user.getId());
+    }
+
+    @GetMapping("/online-users")
+    public String showOnlineUsersPage() {
+        return "online-users";
+    }
+
+    @GetMapping("/teams")
+    public String showTeamsPage() {
+        return "teams";
+    }
+
+    @GetMapping("/create-team")
+    public String showCreateTeamPage() {
+        return "create-team";
+    }
+
+    @GetMapping("/teams/{id}")
+    public String viewTeam(@PathVariable String id, Model model, Principal principal) {
+        if (principal == null) {
+            return "redirect:/login?error=not_authenticated";
+        }
+    
+        try {
+            Optional<Team> team = teamService.getTeamById(id);
+            if (team.isEmpty()) {
+                model.addAttribute("error", "Team not found");
+                return "error";
+            }
+    
+            User currentUser = userService.getUserByEmail(principal.getName());
+            boolean isOwner = "Owner".equals(team.get().getMemberPermissions().get(currentUser.getId()));
+    
+            List<User> members = team.get().getMemberIds().stream()
+        .map(memberId -> userService.getUserById(memberId).orElse(null))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+
+    Map<String, User> membersMap = members.stream()
+        .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        model.addAttribute("team", team.get());
+        model.addAttribute("teamId", id);
+        model.addAttribute("isOwner", isOwner);
+        model.addAttribute("currentUserId", currentUser.getId());
+        model.addAttribute("members", members);
+        model.addAttribute("membersMap", membersMap); 
+            return "team";
+        } catch (Exception e) {
+            model.addAttribute("error", "An error occurred while loading the team");
+            return "error";
+        }
     }
 
     @PostMapping("/chat/send")
     @ResponseBody
-    public void sendMessage(@AuthenticationPrincipal User user, @RequestParam String recipientId, @RequestParam String message) {
-        if (user == null) {
+    public void sendMessage(Principal principal, @RequestParam String recipientId, @RequestParam String message) {
+        if (principal == null) {
             throw new RuntimeException("User not authenticated");
         }
+        User user = userService.getUserByEmail(principal.getName());
         userService.sendMessage(user.getId(), recipientId, message);
     }
 
     @GetMapping("/chat/messages/{friendId}")
     @ResponseBody
-    public List<String> getChatMessages(@AuthenticationPrincipal User user, @PathVariable String friendId) {
-        if (user == null) {
+    public List<String> getChatMessages(Principal principal, @PathVariable String friendId) {
+        if (principal == null) {
             throw new RuntimeException("User not authenticated");
         }
+        User user = userService.getUserByEmail(principal.getName());
         return userService.getChatMessages(user.getId(), friendId);
     }
 
     @PostMapping("/api/ping")
     @ResponseBody
-    public void ping(@AuthenticationPrincipal User user) {
-        if (user == null) {
-            throw new RuntimeException("User not authenticated");
+    public void ping(Principal principal) {
+        if (principal == null) {
+            // Log the unauthenticated access attempt and return without throwing an exception
+            logger.warn("Unauthenticated user attempted to ping.");
+            return;
         }
+        User user = userService.getUserByEmail(principal.getName());
         userService.updateUserOnlineStatus(user.getId(), true);
     }
 }

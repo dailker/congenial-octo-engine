@@ -1,21 +1,33 @@
-# Use Maven with Java 21 to build the app
-FROM maven:3.9.5-eclipse-temurin-21 AS build
-
+#
+# Build stage
+#
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
-# Copy pom and source code
+# Install Maven
+RUN apt-get update && apt-get install -y maven
+
+# Copy pom.xml and resolve dependencies first (cache benefit)
 COPY pom.xml .
+RUN mvn dependency:go-offline
+
+# Copy actual source files
 COPY src ./src
 
-# Package the application
+# Build the project
 RUN mvn clean package -DskipTests
 
-# Use OpenJDK 21 to run the app
-FROM eclipse-temurin:21-jdk
-
+#
+# Package stage
+#
+FROM eclipse-temurin:21-jdk-jammy
 WORKDIR /app
 
-COPY --from=build /app/target/*.jar app.jar
+# Copy the compiled JAR from the build stage
+COPY --from=build /app/target/Tasky-0.0.1-SNAPSHOT.jar app.jar
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Expose the port (change if your app uses a different one)
+EXPOSE 8080
+
+# Set the entrypoint
+ENTRYPOINT ["java", "-cp", "app.jar", "com.humber.Tasky.TaskyApplication"]
