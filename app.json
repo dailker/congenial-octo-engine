@@ -1,7 +1,7 @@
 {
   "name": "Tasky",
   "description": "A Spring Boot productivity app for task and team management.",
-  "repository": "https://github.com/n01648028/Tasky",
+  "repository": "https://github.com/dailker/Tasky",
   "keywords": [
     "spring",
     "java",
@@ -33,8 +33,8 @@
     {
       "url": "heroku/java"
     }
-  ]
+  ],
+  "postdeploy": "echo 'App deployed! Configure your admin user and database connection in Heroku Config Vars if needed.'"
 }
-    "postdeploy": "echo 'App deployed! Configure your admin user and database connection in Heroku Config Vars if needed.'"
   }
 }
