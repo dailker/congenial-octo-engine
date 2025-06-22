@@ -1,7 +1,14 @@
 {
   "name": "Tasky",
   "description": "A Spring Boot productivity app for task and team management.",
-  "repository": "https://github.com/dailker/congenial-octo-engine",
+  "repository": "https://github.com/n01648028/Tasky",
+  "keywords": [
+    "spring",
+    "java",
+    "productivity",
+    "tasks",
+    "teams"
+  ],
   "env": {
     "MONGODB_URI": {
       "description": "MongoDB Atlas connection string (must include database name)",
@@ -14,27 +21,20 @@
     "ADMIN_USER": {
       "description": "Admin username for Spring Security",
       "value": "admin",
-      "required": false
+      "required": true
     },
     "ADMIN_PASSWORD": {
       "description": "Admin password for Spring Security",
-      "value": "Wacd*506",
-      "required": false
+      "value": "admin",
+      "required": true
     }
   },
   "buildpacks": [
     {
       "url": "heroku/java"
     }
-  ],
-  "formation": {
-    "web": {
-      "quantity": 1,
-      "size": "free"
-    }
-  },
-  "addons": [],
-  "scripts": {
+  ]
+}
     "postdeploy": "echo 'App deployed! Configure your admin user and database connection in Heroku Config Vars if needed.'"
   }
 }

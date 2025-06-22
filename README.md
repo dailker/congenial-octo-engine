@@ -5,7 +5,7 @@ This project includes an `app.json` file, which will prompt you for configuratio
 
 ## One-Click Deploy
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://www.heroku.com/deploy?template=https://github.com/dailker/Tasky)
 
 - Click the button above.
 - Heroku will prompt you for:
@@ -41,6 +41,9 @@ export ADMIN_PASSWORD=your_admin_password
 ```
 
 ---
+
+**Terms of Use:**  
+By using the Deploy to Heroku button, you agree to the [Heroku Terms of Use](https://www.heroku.com/policy/tos) unless you provide your own Terms of Use or license file in this repository.
 
 **Important:**  
 All sensitive values are now set via environment variables.  
