@@ -26,8 +26,8 @@ WORKDIR /app
 # Copy the compiled JAR from the build stage
 COPY --from=build /app/target/Tasky-0.0.1-SNAPSHOT.jar app.jar
 
-# Expose the port (change if your app uses a different one)
+# Expose the port (Heroku will set $PORT)
 EXPOSE 8080
 
-# Set the entrypoint
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Set the entrypoint, pass $PORT if set (Heroku will set PORT env var)
+ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]
