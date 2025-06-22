@@ -1,13 +1,22 @@
 # Tasky - Heroku Setup Instructions
 
-When deploying to Heroku, you must provide the following configuration variables:
+When deploying to Heroku, you can use the **Deploy to Heroku** button or the Heroku CLI.  
+This project includes an `app.json` file, which will prompt you for configuration values during deployment.
 
-- **MONGODB_URI**: Your MongoDB Atlas connection string (e.g. `mongodb+srv://user:password@cluster.mongodb.net/dbname?retryWrites=true&w=majority`)
-- **JWT_SECRET**: A secure secret key for JWT signing (e.g. a long random string)
-- **ADMIN_USER**: (Optional) Admin username for Spring Security
-- **ADMIN_PASSWORD**: (Optional) Admin password for Spring Security
+## One-Click Deploy
 
-You can set these in the Heroku dashboard under **Settings > Config Vars** or via the Heroku CLI:
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
+- Click the button above.
+- Heroku will prompt you for:
+  - **MONGODB_URI**: Your MongoDB Atlas connection string (must include a database name)
+  - **JWT_SECRET**: Your JWT secret key
+  - **ADMIN_USER**: Admin username for Spring Security (default: admin)
+  - **ADMIN_PASSWORD**: Admin password for Spring Security (default: admin)
+
+## Manual Heroku CLI Setup
+
+You can also set config vars manually:
 
 ```sh
 heroku config:set MONGODB_URI=your_mongodb_uri
@@ -16,7 +25,7 @@ heroku config:set ADMIN_USER=admin
 heroku config:set ADMIN_PASSWORD=your_admin_password
 ```
 
-**Questions to ask during setup/clone:**
+**Questions you will be prompted for during setup:**
 - What is your MongoDB Atlas connection string? (MONGODB_URI)
 - What is your JWT secret key? (JWT_SECRET)
 - What admin username do you want? (ADMIN_USER)
@@ -30,4 +39,11 @@ export ADMIN_USER=admin
 export ADMIN_PASSWORD=your_admin_password
 ./mvnw spring-boot:run
 ```
+
+---
+
+**Important:**  
+All sensitive values are now set via environment variables.  
+If you are sharing or committing this project, **do not hardcode secrets in `src/main/resources/application.properties`**.  
+**Never commit production secrets to public repositories.**
 
