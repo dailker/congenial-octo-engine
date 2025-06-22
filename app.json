@@ -34,7 +34,7 @@
       "url": "heroku/java"
     }
   ],
-  "postdeploy": "echo 'App deployed! Configure your admin user and database connection in Heroku Config Vars if needed.'"
-}
+  "scripts": {
+    "postdeploy": "echo 'App deployed! Configure your admin user and database connection in Heroku Config Vars if needed.'"
   }
 }
